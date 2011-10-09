@@ -1,0 +1,10 @@
+# Description
+Prolog is one of the foremost logic programming languages. picoProlog is a small yet capable subset of Prolog, defined in the freely-available book: 
+
+[http://spivey.oriel.ox.ac.uk/wiki/resources/lp/logic.pdf](http://spivey.oriel.ox.ac.uk/wiki/resources/lp/logic.pdf)
+
+This book also includes a full implementation of picoProlog, using a variant of the language Pascal. 
+
+The goal of this project is to create a new implementation of picoProlog, using Lua (http://www.lua.org), a small, elegant, modern programming language. The existing implementation may be used as a starting point -- however, this will need to be understood thoroughly, and adapted substantially from Pascal to Lua. 
+
+This is a challenging project, which will require clarity and depth of thought, excellent programming skills, and an eagerness and ability to gain expertise in both the Prolog and Lua languages, and implementation techniques; for the latter, taking module CS-4150 will be helpful. For the right student, however, the project should prove to be quite fascinating, and will certainly teach some important core ideas that lie at the heart of Computer Science.
