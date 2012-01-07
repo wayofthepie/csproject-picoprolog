@@ -7,7 +7,7 @@ function Memory.new()
     
     --[[
         Allocate space on the local stack.
-        @param Integer - size
+        @param size
         @return - localsp + the size allocated
     --]]
     function locAlloc(size)
@@ -23,8 +23,8 @@ function Memory.new()
     
     --[[
         Allocate space on the global stack.
-        @param Integer - kind
-        @param Integer - size
+        @param kind
+        @param size
         @return
     --]]
     function gloAlloc(kind, size)
