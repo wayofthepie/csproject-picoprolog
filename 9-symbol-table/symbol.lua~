@@ -51,7 +51,6 @@ function Symbol.new(name, arity, action, proc)
     
     --[[
         Compares this Symbol to the Symbol symbol.
-        @returns - true if this Symbol is equal to symbol.
     --]]
     function self:compare(symbol)
         local isEqual = true

@@ -9,4 +9,3 @@ BuiltIn = {
     EQUALITY= 8,
     FAIL    = 9
 }
-
