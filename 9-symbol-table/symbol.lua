@@ -6,10 +6,10 @@ require("constant")
     Field names to access specific values of a Symbol. 
 --]]
 SymbolFields = {
-    NAME = "name",
-    ARITY = "arity",
-    ACTION = "action",
-    PROC = "proc"
+    NAME = "name",      -- name
+    ARITY = "arity",    -- number of arguments
+    ACTION = "action",  -- code for the action, if built-in symbol, 0 if not
+    PROC = "proc"       -- clause chain
 }
 
 
