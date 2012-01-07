@@ -21,6 +21,10 @@ function SymbolTable.new()
         Checks whether a symbol already exists in the symbol table.
         @param symbol - the Symbol being searched for.  
         @returns -true if the symbol exists, false otherwise.
+        
+        TODO this comparison should just be by name, 
+        and not comparing all values in each symbol, as now symbols 
+        with 
     --]]
     function self:exists(symbol)
         local exists = false
@@ -40,6 +44,8 @@ function SymbolTable.new()
         if not self:exists(symbol) then
             symbols[symbol] = symbol
             symcount = symcount + 1
+        else
+            print("Cannot define a non-unique symbol!")
         end
     end
     
@@ -83,6 +89,10 @@ function SymbolTable.new()
     return self
 end
 
-s = Symbol.new("n", "t", "i", "o")
-symtab = SymbolTable.new()
-symtab:printSymbols()
+--[[
+    s = Symbol.new("n", "t", "i", "o")
+    symtab = SymbolTable.new()
+    symtab:printSymbols()
+    symtab:defineSymbol(Symbol.new(":      ", 1, 0, nil))
+    symtab:printSymbols()
+--]]
