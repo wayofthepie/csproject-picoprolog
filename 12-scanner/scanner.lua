@@ -1,3 +1,6 @@
+package.path = package.path .. ";../0-prelude/prelude.lua"
+require "prelude"
+
 Scanner = {}
 
 function Scanner.new() 
@@ -38,18 +41,25 @@ function Scanner.new()
             for char in line:gmatch"." do
                 if not char:match"%s" then
                     table.insert(chars,char)
-                end
+                else
+                    table.insert(chars,SpecVals.SPACE)
+                end                
              end
+             table.insert(chars,SpecVals.ENDLINE)
         end
+        table.insert(chars,SpecVals.ENDFILE)
+    end
+    
+    function self:currentChar()
+        return chars[index]
     end
     
     --[[
         Gets the next character from the file loaded.
     --]]
     function self:nextChar()
-        local char = chars[index]
         index = index + 1
-        return char        
+        return chars[index]  
     end
         
     --[[
