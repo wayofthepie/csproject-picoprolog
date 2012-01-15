@@ -24,8 +24,7 @@ TunableParameters = constant.protect({
     Values used throughout.
 --]]
 SpecVals = constant.protect({
-    ENDSTR = string.char(0),
-    TAB = string.char(9),
-    ENDLINE = string.char(10),
-    ENDFILE = string.char(127)    
+    SPACE = "SPACE",
+    ENDLINE = "ENDLINE",
+    ENDFILE = "ENDFILE"    
 })
