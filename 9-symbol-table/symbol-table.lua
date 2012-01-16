@@ -14,6 +14,7 @@ function SymbolTable.new()
     local self = {}
     
     local symcount = 0
+    
     local symbols = {}
        
         
@@ -102,9 +103,11 @@ function SymbolTable.new()
     return self
 end
 
-
+--[[
     s = Symbol.new("n", "t", "i", "o")
     symtab = SymbolTable.new()
     symtab:printSymbols()
     symtab:defineSymbol(Symbol.new(":      ", 1, 0, nil))
     symtab:printSymbols()
+    
+--]]
