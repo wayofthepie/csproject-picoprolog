@@ -1,14 +1,8 @@
-module("lexical-analyzer",package.seeall)
-
+module("analyzer", package.seeall)
 -- Edit the package search path
-package.path = package.path .. ";../0-prelude/?.lua;../lib/?.lua;../lib/classes/?.lua"
+package.path = package.path .. ";../0-prelude/?.lua;../lib/?.lua;../lib/classes/?.lua;../9-symbol-table/?.lua"
 require "prelude" require "scanner" require("token-values")
-require "constant" require "StrBuffer"
-
-local scan = Scanner.new()
-local _tlib = require "_tlib"
--- Load a file into the scanner
-scan:loadFile("test.pp")
+require "constant" require "StrBuffer" require "symbol-table"
 
 
 
@@ -35,12 +29,16 @@ end
 --[[
     Represents rules for characters being scanned.
 --]]
-local Rules = {}
-function Rules.new() 
+
+LexicalAnalyzer = {}
+function LexicalAnalyzer.new(filename) 
     local self = {}
     
+    local scan = Scanner.new()
+    local _tlib = require "_tlib"       
     local sbuff = StrBuffer.new()
-
+    local lineno = 1
+    
     local rules = {
         --[[
             Whitespace rules: 
@@ -59,11 +57,10 @@ function Rules.new()
             End of line rules:
             TODO fix line number counting.
         --]]
-        [SpecVals.ENDLINE]  =   function()     
-                                    local lineno = 0
-                                    scan:nextChar() 
-                                                                        
-                                    print ("line num = " .. lineno)
+        [SpecVals.ENDLINE]  =   function()                                         
+                                    lineno = lineno + 1
+                                    scan:nextChar()     
+                                    print(lineno)
                                     return Token.new(TokVal.EOLTOK, lineno) 
                                 end,
         
@@ -273,8 +270,23 @@ function Rules.new()
     --[[
         @return the table representing the rules for characters.
     --]]
-    function self:rules() return rules end
+    function self:applyRules(char) 
+        return rules[char](char)
+    end
     
+    
+    --[[
+        Returns the next token generated from the character strea starting at the 
+        character the scanner is currently pointing to.
+        @return -the next token.
+    --]]
+    function self:getNextToken()
+        local token        
+        print(scan:currentChar())
+        token = self:applyRules(scan:currentChar())
+        return token
+    end
+          
     -- Private Functions
     --[[
         Refers to a specific index in the rules table, depending on
@@ -307,32 +319,17 @@ function Rules.new()
         Sets the default value that rules will return if an non-existant 
         index tries to be accessed.
     --]]
-    _tlib.setDefault(rules, ruleMatcher)
+    _tlib.setDefault(rules, ruleMatcher) 
     
-    
-    return self
-end
-
-
-LexicalAnalyzer = {}
-function LexicalAnalyzer.new()
-    local self = {}
-    local lineno = 1
-    local rules = Rules.new()
-    
-    function self:getNextToken()
-        local token
-        local char = scan:currentChar()
-        token = rules:rules()[char](char)
-        return token
-    end
+    -- Load a file into the scanner
+    scan:loadFile(filename) 
     
     return self
 end
-------------------------
+--[[
 -- Testing --
 local t = -1
-local lexer = LexicalAnalyzer.new()
+local lexer = LexicalAnalyzer.new("../test/test.pp")
 
 while t ~= TokVal.EOFTOK do
     t = lexer:getNextToken()
@@ -342,3 +339,4 @@ while t ~= TokVal.EOFTOK do
     t = t:getType()
 end
 
+--]]
