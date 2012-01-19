@@ -14,6 +14,7 @@ function SymbolTable.new()
     local self = {}
     
     local symcount = 0
+    
     local symbols = {}
        
         
@@ -26,10 +27,23 @@ function SymbolTable.new()
         and not comparing all values in each symbol, as now symbols 
         with 
     --]]
-    function self:exists(symbol)
+    function self:symbolExists(symbol)
         local exists = false
         for k,v in pairs(symbols) do
             if v:compare(symbol) then
+                exists = true
+            end
+        end
+        return exists
+    end
+    
+    --[[
+        @param symbolName - string representing the name of this symbol.
+    --]]
+    function self:symbolNameExists(symbolName)
+        local exists = false
+        for k,v in pairs(symbols) do
+            if v:get(SymbolFields.NAME) == symbolName  then
                 exists = true
             end
         end
@@ -41,7 +55,7 @@ function SymbolTable.new()
         @param symbol - the Symbol you want to define
     --]]
     function self:defineSymbol(symbol)
-        if not self:exists(symbol) then
+        if not self:symbolExists(symbol) then
             symbols[symbol] = symbol
             symcount = symcount + 1
         else
@@ -95,4 +109,5 @@ end
     symtab:printSymbols()
     symtab:defineSymbol(Symbol.new(":      ", 1, 0, nil))
     symtab:printSymbols()
+    
 --]]

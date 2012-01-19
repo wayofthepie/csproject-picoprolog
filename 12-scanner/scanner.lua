@@ -1,80 +1,55 @@
+package.path = package.path .. ";../0-prelude/prelude.lua"
+require "prelude"
+
 Scanner = {}
 
-function Scanner.new() 
+function Scanner.new(filename) 
     local self = {}
     
     local chars = {}
-    
-    local index = 1
-    
-    local token, tokval, tokival, toksval
-    local errflag, errcount
-    
-    function self:syntaxerror()
-        
-    end
-    
-    function self:showError()
-    
-    end
-    
-    function self:recover()
-    
-    end
-    
-    function self:scan()
-        
-    end
-    
-    --[[ 
-        Opens a (text) file and builds a table of all the 
-        characters contained in the file.
-        Does not store any whitespaces.
-        Must change to add ENDOFLINE to each end of line.
-    --]]
-    function self:loadFile(filename)
-        local file = io.open(filename)
-        for line in file:lines() do
-            for char in line:gmatch"." do
-                if not char:match"%s" then
-                    table.insert(chars,char)
-                end
-             end
-        end
-    end
-    
+    local pushedChar = nil
+    local file = io.open(filename)
+      
     --[[
         Gets the next character from the file loaded.
     --]]
     function self:nextChar()
-        local char = chars[index]
-        index = index + 1
-        return char        
-    end
-        
-    --[[
-        Checks whether there is another character in the input.
-    --]]
-    function self:hasNext()
-        local hasNext = false        
-        if chars[index] ~= nil then
-            hasNext = true
-        end            
-        return hasNext
-    end
-    
-    function self:dec()
-        index = index -1
-    end
-    
-    function self:printAll()
-        for k,v in pairs(chars) do 
-            print(k .. " " .. v)
+        local char = ""   
+        if pushedChar == nil then
+            char = file:read(1)
+            if char == nil then
+                char = SpecVals.ENDFILE
+            else
+                while char:match"%s" do 
+                    char = file:read(1)        
+                end
+            end
+            print("ret = " .. char)
+        else
+            char = pushedChar
+            pushedChar = nil
         end
+        return char
     end
-
-    return self
+  
+    --[[
+        Stores the character char.
+    --]]
+    function self:push(char)
+        pushedChar = char
+    end
     
+   
+    
+    function self:hasPushedChar()
+        local hasPushed = false
+        if pushed ~= nil then
+            hasPushed = true
+        end
+        return hasPushed
+    end
+    
+    return self
 end
 
 --[[

@@ -1,5 +1,4 @@
 BuildTerms = {}
-HeapFunctions = {}
 
 function BuiltTerms.new() 
     local self = {}
