@@ -28,3 +28,23 @@ SpecVals = constant.protect({
     ENDLINE = "ENDLINE",
     ENDFILE = "ENDFILE"    
 })
+
+TokVal = constant.protect({
+    IDENT = "IDENTIFIER",
+    VARIABLE = "VARIABLE",
+    NUMBER = "NUMBER",
+    CHCON = "CHARACTER_CONSTANT",
+    STRCON = "STRING_CONSTANT",
+    ARROW = "ARROW",
+    LPAR = "LEFT_PARENTHESIS",
+    RPAR = "RIGHT_PARENTHESIS",
+    COMMA = "COMMA",
+    DOT = "DOT",
+    COLON = "COLON",
+    EQUAL = "EQUAL",
+    NEGATE = "NEGATE",
+    COMMENT = "COMMENT",
+    EOLTOK = "EOLTOK",
+    EOFTOK = "EOFTOK"
+    
+})

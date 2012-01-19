@@ -65,8 +65,7 @@ function Memory.new()
     end
     
     function self:printMemory()
-        for k,v in pairs(memory) do
-            
+        for k,v in pairs(memory) do            
             print(k,v)
         end
     end

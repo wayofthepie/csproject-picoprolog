@@ -5,7 +5,7 @@ require("constant")
 --[[
     Field names to access specific values of a Symbol. 
 --]]
-SymbolFields = {
+local SymbolFields = {
     NAME = "name",      -- name
     ARITY = "arity",    -- number of arguments
     ACTION = "action",  -- code for the action, if built-in symbol, 0 if not

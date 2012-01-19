@@ -11,7 +11,7 @@ function Parser.new()
         
     end
     
-    function self:parseCompund()
+    function self:parseCompund(token,)
         
     end
 
