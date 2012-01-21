@@ -64,10 +64,8 @@ function LexicalAnalyzer.new(filename)
             End of line rules:
             TODO fix line number counting.
         --]]
-        [SpecVals.ENDLINE]  =   function()                                         
-                                    lineno = lineno + 1
-                                    scan:nextChar()                                         
-                                    return Token.new(TokVal.EOLTOK, lineno) 
+        [SpecVals.ENDLINE]  =   function()                                                                                                                                                         
+                                    return Token.new(TokVal.EOLTOK, scan:getLineNum()) 
                                 end,
         
         --[[
