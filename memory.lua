@@ -125,23 +125,25 @@ function BuildTerms.new()
     
     local mem = Memory.new()
     
+    local symTab = SymbolTable.new()
+    
     --[[
         @param termpointer -pointer to mem
         @param offset - 
         @param tType - type of term
     --]]
-    function makeTag(termpointer, offset, tType)
+    local function makeTag(termpointer, offset, tType)
         mem:get()[termpointer] = 256 * (offset + tType)
     end
     
-    function buildFunc(termpointer, func)
-        mem:get()[termpointer + 2] = func 
-    end
+    local function build(termpointer, term) mem:get()[termpointer + 2] = term end
     
-    function buildInt(termpointer,num)
-        mem:get()[termpointer + 2] = num
-    end
- 
+    local function buildFunc(termpointer, func) build(termpointer,func) end
+    
+    local function buildInt(termpointer,num) build(termpointer,num) end
+    
+    local function buildChar(termpointer,char) build(termpointer,char) end
+        
         
     --[[
         Constructs a compound term on the heap.
@@ -173,7 +175,7 @@ function BuildTerms.new()
     --]]
     function self:makeNode(func, arg1, arg2)
         args = { arg1, arg2 }
-        return self:makeCompund(func, args)        
+        return self:makeCompound(func, args)        
     end
     
     --[[
@@ -198,13 +200,28 @@ function BuildTerms.new()
     end
     
     --[[
-        Constructs a character node on the heap
+        Constructs a character node on the heap.
     --]]
-    function self:makeChar()
+    function self:makeChar(char)
         local termpointer
         
         termpointer = mem:heapAlloc(Term.TERM_SIZE)        
-        
+        makeTag(termpointer,Term.TERM_SIZE,Term.CHRCTR)        
+        buildChar(termpointer,char)
+        return termpointer
+    end
+    
+    --[[
+        Constructs a string as a Prolog list of chars.
+    --]]
+    function self:makeString(string)
+        local termpointer
+               
+        termpointer = self:makeNode(symTab:getNilSym(),nil,nil)                
+        for char in string:gmatch"." do
+            termpointer = self:makeNode(symTab:getConsSym(),self:makeChar(char),termpointer)
+        end            
+        return termpointer
     end
     
     return self
@@ -214,6 +231,6 @@ f = Symbol.new("FUNC", 5, 0, nil)
 
 bt = BuildTerms.new()
 local i =bt:makeCompound(f,5)
-
+local test = bt:makeString("test")
 
 

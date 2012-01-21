@@ -3,6 +3,21 @@ require("constant")
 require("built-in-relations")
 require("symbol")
 
+
+local BuiltIn = {
+    CUT     = 1,         -- !/0
+    CALL    = 2,
+    PLUS    = 3,
+    TIMES   = 4,
+    ISINT   = 5,
+    ISCHAR  = 6,
+    NAFF    = 7,
+    EQUALITY= 8,
+    FAIL    = 9
+}
+
+
+
 SymbolTable = {}
 
 --[[
@@ -17,7 +32,12 @@ function SymbolTable.new()
     
     local symbolsTable = {}
     
-   
+    local cons
+    local cutsym
+    local eqsym
+    local nilsym
+    local notsym    
+    
         
     --[[
         Checks whether a symbol already exists in the symbol table.
@@ -48,13 +68,16 @@ function SymbolTable.new()
         @param symbolName - string representing the name of this symbol.
     --]]
     function self:symbolNameExists(symbolName)
+        local symbol
         local exists = false
+        
         for k,v in pairs(symbolsTable) do
             if v:get(SymbolFields.NAME) == symbolName  then
                 exists = true
+                symbol = v
             end
         end
-        return exists
+        return exists, symbol
     end
     
     --[[
@@ -71,11 +94,12 @@ function SymbolTable.new()
         else
             print("Cannot define a non-unique symbol!")
         end
+        return symbol
     end
     
     
-    
-    
+    function self:getNilSym() return nilsym end
+    function self:getConsSym() return cons end
     
     --[[ 
         Prints all the values of all the symbols in the table.
@@ -94,17 +118,17 @@ function SymbolTable.new()
         from anywhere.
     --]]
     local function initBuiltInSymbols()
-        self:defineSymbol(Symbol.new(":      ", 2, 0, nil))
-        self:defineSymbol(Symbol.new("!      ", 0, BuiltIn.CUT, nil))
-        self:defineSymbol(Symbol.new("=      ", 2, BuiltIn.EQUALIY ,nil))
-        self:defineSymbol(Symbol.new("nil      ", 0, 0, nil))
-        self:defineSymbol(Symbol.new("not      ", 1, BuiltIn,NAFF, nil))
-        self:defineSymbol(Symbol.new("call      ", 1, BuiltIn.CALL, nil))
-        self:defineSymbol(Symbol.new("plus      ", 3, BuiltIn.PLUS, nil))
-        self:defineSymbol(Symbol.new("times      ", 3, BuiltIn.TIMES, nil))
-        self:defineSymbol(Symbol.new("integer      ", 1, BuiltIn.ISINT, nil))
-        self:defineSymbol(Symbol.new("char      ", 1, BuiltIn.ISCHAR, nil))
-        self:defineSymbol(Symbol.new("false      ", 0, BuiltIn.FAIL, nil))
+        cons = self:defineSymbol(Symbol.new(":", 2, 0, nil))
+        self:defineSymbol(Symbol.new("!", 0, BuiltIn.CUT, nil))
+        self:defineSymbol(Symbol.new("=", 2, BuiltIn.EQUALIY ,nil))
+        nilsym = self:defineSymbol(Symbol.new("nil", 0, 0, nil))
+        self:defineSymbol(Symbol.new("not", 1, BuiltIn,NAFF, nil))
+        self:defineSymbol(Symbol.new("call", 1, BuiltIn.CALL, nil))
+        self:defineSymbol(Symbol.new("plus", 3, BuiltIn.PLUS, nil))
+        self:defineSymbol(Symbol.new("times", 3, BuiltIn.TIMES, nil))
+        self:defineSymbol(Symbol.new("integer", 1, BuiltIn.ISINT, nil))
+        self:defineSymbol(Symbol.new("char", 1, BuiltIn.ISCHAR, nil))
+        self:defineSymbol(Symbol.new("false", 0, BuiltIn.FAIL, nil))
     end
     
     --[[
