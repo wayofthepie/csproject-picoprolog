@@ -130,15 +130,15 @@ function BuildTerms.new()
         @param offset - 
         @param tType - type of term
     --]]
-    function self:makeTag(termpointer, offset, tType)
+    function makeTag(termpointer, offset, tType)
         mem:get()[termpointer] = 256 * (offset + tType)
     end
     
-    function self:buildFunc(termpointer, func)
+    function buildFunc(termpointer, func)
         mem:get()[termpointer + 2] = func 
     end
     
-    function self:buildInt(termpointer,num)
+    function buildInt(termpointer,num)
         mem:get()[termpointer + 2] = num
     end
  
@@ -158,8 +158,8 @@ function BuildTerms.new()
         termAndArity = Term.TERM_SIZE + arity
         termpointer = mem:heapAlloc(termAndArity)
     
-        self:makeTag(termpointer, termAndArity, Term.FUNC)
-        self:buildFunc(termpointer,func)
+        makeTag(termpointer, termAndArity, Term.FUNC)
+        buildFunc(termpointer,func)
                
         return termpointer
     end
@@ -192,11 +192,20 @@ function BuildTerms.new()
         
         termpointer = mem:heapAlloc(Term.TERM_SIZE)
         
-        self:makeTag(termpointer,Term.TERM_SIZE, Term.INT)
-        self:buildInt(termpointer,integer)        
+        makeTag(termpointer,Term.TERM_SIZE, Term.INT)
+        buildInt(termpointer,integer)        
+        return termpointer
     end
     
-  
+    --[[
+        Constructs a character node on the heap
+    --]]
+    function self:makeChar()
+        local termpointer
+        
+        termpointer = mem:heapAlloc(Term.TERM_SIZE)        
+        
+    end
     
     return self
 end
