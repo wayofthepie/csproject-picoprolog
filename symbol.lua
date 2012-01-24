@@ -41,6 +41,9 @@ function Symbol.new(name, arity, action, proc)
         return symbolVals[key]
     end
     
+    function self:set(key,val)
+        symbolVals[key] = val
+    end
     --[[
         @returns - the table containing the name, arity,
                    action and proc for this symbol. 

@@ -45,6 +45,14 @@ TokVal = constant.protect({
     NEGATE = "NEGATE",
     COMMENT = "COMMENT",
     EOLTOK = "EOLTOK",
-    EOFTOK = "EOFTOK"
-    
+    EOFTOK = "EOFTOK"    
 })
+
+Term = {
+    FUNC = 1,
+    INT = 2,
+    CHRCTR = 3,
+    CELL = 4,
+    REF = 5,
+    UNDO = 6
+}

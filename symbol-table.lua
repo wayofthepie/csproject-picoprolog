@@ -95,11 +95,12 @@ function SymbolTable.new()
             print("Cannot define a non-unique symbol!")
         end
         return symbol
-    end
+    end    
     
+    function self:getNilSym()   return nilsym end
+    function self:getConsSym()  return cons end
+    function self:getEqSym()    return eqsym end
     
-    function self:getNilSym() return nilsym end
-    function self:getConsSym() return cons end
     
     --[[ 
         Prints all the values of all the symbols in the table.
@@ -120,7 +121,7 @@ function SymbolTable.new()
     local function initBuiltInSymbols()
         cons = self:defineSymbol(Symbol.new(":", 2, 0, nil))
         self:defineSymbol(Symbol.new("!", 0, BuiltIn.CUT, nil))
-        self:defineSymbol(Symbol.new("=", 2, BuiltIn.EQUALIY ,nil))
+        eqsym = self:defineSymbol(Symbol.new("=", 2, BuiltIn.EQUALIY ,nil))
         nilsym = self:defineSymbol(Symbol.new("nil", 0, 0, nil))
         self:defineSymbol(Symbol.new("not", 1, BuiltIn,NAFF, nil))
         self:defineSymbol(Symbol.new("call", 1, BuiltIn.CALL, nil))

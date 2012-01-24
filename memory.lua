@@ -1,4 +1,3 @@
-package.path = package.path .. ";../0-prelude/?.lua;../lib/constant.lua;../9-symbol-table/?.lua"
 require("constant")
 require("prelude")
 require("symbol")
@@ -7,7 +6,7 @@ require("symbol-table")
 --[[
     
 --]]
-local Memory = {}
+Memory = {}
 function Memory.new() 
     local self = {}
     
@@ -39,7 +38,7 @@ function Memory.new()
         clauses become a permanent part of the heap, but goal clauses 
         can be discarded
      --]]        
-    local heapmark
+    local heapmark = 0
     
     
     ------------ Public Functions ------------                                 
@@ -94,6 +93,24 @@ function Memory.new()
     function self:get()
         return memory
     end
+    
+    function self:setHeapMark(pointer)
+        heapmark = pointer
+    end
+    
+    function self:getHeapMark()
+        return heapmark
+    end
+    
+    function self:setHeapPointer(pointer)
+        heapp = pointer
+    end
+    
+    function self:getHeapPointer()
+        return heapp
+    end
+    
+    
     --[[
         Prints all locations of memory.        
     --]]
@@ -107,26 +124,20 @@ function Memory.new()
     return self
 end
 
-local Term = {
-    FUNC = 1,
-    INT = 2,
-    CHRCTR = 3,
-    CELL = 4,
-    REF = 5,
-    UNDO = 6,
-    TERM_SIZE = 3,
-    CLAUSE_SIZE = 4
-}
 
-local BuildTerms = {}
-function BuildTerms.new()
+
+Build = {}
+function Build.new(symTab,mem)
     
     local self = {}
     
-    local mem = Memory.new()
     
-    local symTab = SymbolTable.new()
     
+    local TERM_SIZE     = 3
+    
+    local CLAUSE_SIZE   = 4
+    
+    ---------- Helper Functions for Terms ----------
     --[[
         @param termpointer -pointer to mem
         @param offset - 
@@ -144,11 +155,13 @@ function BuildTerms.new()
     
     local function buildChar(termpointer,char) build(termpointer,char) end
         
-        
+    ------------------------------------------------ 
+           
     --[[
         Constructs a compound term on the heap.
         @param func 
-        @param args        @return -pointer to the compound term
+        @param args        
+        @return -pointer to the compound term
     --]]
     function self:makeCompound(func, args)
         local termpointer
@@ -157,12 +170,12 @@ function BuildTerms.new()
         local refnode = {}
         
         arity = func:get(SymbolFields.ARITY)        
-        termAndArity = Term.TERM_SIZE + arity
+        termAndArity = TERM_SIZE + arity
         termpointer = mem:heapAlloc(termAndArity)
     
         makeTag(termpointer, termAndArity, Term.FUNC)
         buildFunc(termpointer,func)
-               
+        print("tab= " .. mem:get()[termpointer])
         return termpointer
     end
     
@@ -179,7 +192,7 @@ function BuildTerms.new()
     end
     
     --[[
-        Construct a reference cell prepared earlier.
+        Construct a reference cell prepared earlier.0
         
     --]]
     function self:makeRef(offset)
@@ -192,9 +205,9 @@ function BuildTerms.new()
     function self:makeInt(integer)
         local termpointer 
         
-        termpointer = mem:heapAlloc(Term.TERM_SIZE)
+        termpointer = mem:heapAlloc(TERM_SIZE)
         
-        makeTag(termpointer,Term.TERM_SIZE, Term.INT)
+        makeTag(termpointer,TERM_SIZE, Term.INT)
         buildInt(termpointer,integer)        
         return termpointer
     end
@@ -205,8 +218,8 @@ function BuildTerms.new()
     function self:makeChar(char)
         local termpointer
         
-        termpointer = mem:heapAlloc(Term.TERM_SIZE)        
-        makeTag(termpointer,Term.TERM_SIZE,Term.CHRCTR)        
+        termpointer = mem:heapAlloc(TERM_SIZE)        
+        makeTag(termpointer,TERM_SIZE,Term.CHRCTR)        
         buildChar(termpointer,char)
         return termpointer
     end
@@ -224,13 +237,83 @@ function BuildTerms.new()
         return termpointer
     end
     
+    ---------- Helper Functions for Clauses ----------
+    local function setNumVars(pointer,nvars)
+        mem[pointer] = nvars
+    end
+    
+    --[[
+        Unification key.
+    --]]
+    local function setClauseKey(pointer,val)
+        mem[pointer + 1] = val
+    end
+    
+    local function setNextClause(pointer,nextClause)
+        mem[pointer + 2] = nextClause
+    end
+    
+    local function setClauseHead(pointer,head)
+        mem[pointer + 3] = head
+    end
+    
+    local function startOfClauseBody(pointer)
+        return pointer + 4
+    end
+    
+    local function clauseBody(pointer,num,arg)
+        mem[startOfClauseBody(pointer) + num - 1] = arg
+    end        
+    --------------------------------------------------
+    
+    --[[
+        Constructs a clause on the heap
+    --]]
+    function self:makeClause(nvars,head,body,nbody)
+        local num = 1
+        
+        termpointer = mem:heapAlloc(CLAUSE_SIZE + nbody + 1)
+        setNumVars(termpointer,nvars)
+        setNextClause(termpointer,nil)
+        
+        for k,v in pairs(body) do
+            clauseBody(termpointer,num,v)
+            num = num + 1
+        end
+        
+        clauseBody(termpointer,nbody + 1, nil)
+        --[[
+        if head = nil then 
+            setClauseKey(termpointer,0)
+        else
+            setClauseKey(termpointer, --]]
+        return termpointer
+            
+    end
+    
+    function self:getKind(pointer)
+        print(mem:get(pointer))
+        return mem:get(pointer)
+    end
+    
+    function self:printMem()
+        mem:printMemory()
+    end
+    
     return self
 end
+--[[
+local mem = Memory.new()
+    
+local symTab = SymbolTable.new()
 
 f = Symbol.new("FUNC", 5, 0, nil)
 
-bt = BuildTerms.new()
-local i =bt:makeCompound(f,5)
-local test = bt:makeString("test")
-
-
+b = Build.new(symTab,mem)
+local i     = b:makeCompound(f,5)
+local test  = b:makeString("test")
+b:makeClause(2,"e2",{t,t},0)
+b:makeClause(5,"e22",{t,t},4)
+b:makeClause(2,"e2",{t,t},0)
+b:makeClause(5,"e22",{t,t},4)
+mem:printMemory() --]]

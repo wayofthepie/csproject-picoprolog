@@ -33,13 +33,17 @@ function Scanner.new(filename)
             char = file:read(1)
             if char ~= nil then
                 
-                while char:match"%s" and char ~= "\n" do                     
-                    char = file:read(1)                            
+                while char:match"%s" do                     
+                    char = file:read(1) 
+                    if char == nil then
+                        break
+                    end
                 end
                 
                 if char == '\n' then
                     char = SpecVals.ENDLINE
                     lineno = lineno + 1
+                    print(lineno)
                 end
                 
             end
@@ -47,7 +51,7 @@ function Scanner.new(filename)
                 char = SpecVals.ENDFILE
                 lineno = lineno + 1
             end
-            print("ret = " .. char)
+        --    print("ret = " .. char)
         else
             char = pushedChar
             pushedChar = nil

@@ -1,4 +1,3 @@
-module("analyzer", package.seeall)
 -- Edit the package search path
 require "prelude" require "scanner" 
 require "constant" require "lib/StrBuffer" require "symbol-table"
@@ -7,10 +6,14 @@ require "constant" require "lib/StrBuffer" require "symbol-table"
     Class to represent tokens.
 --]]
 local Token = {}
-function Token.new(token, value)
+function Token.new(tokenType, value)
+    
     local self = {}
     
-    local t = token
+    -- The type of this token
+    local t = tokenType
+    
+    -- The value of this token
     local v = value
     
     
@@ -123,7 +126,7 @@ function LexicalAnalyzer.new(filename)
                                         num:append(char)
                                         char = scan:nextChar()
                                     end
-                                                                    
+                                    scan:push(char)                             
                                     --[[
                                         lua provides auto conversion between strings and numbers
                                         at runtime, so no need to convert string to number before
@@ -192,6 +195,7 @@ function LexicalAnalyzer.new(filename)
                     local char = scan:nextChar()
                     if char ~= "*" then
                         error("Syntax Error: bad token \"/\", possibly an unclosed comment.")
+                        os.exit(1)
                     else 
                         chartwo = ' '
                         char = scan:nextChar()
@@ -200,8 +204,10 @@ function LexicalAnalyzer.new(filename)
                         end
                         if char == nil then
                             error("Syntax Error: end of file in comment! line: " .. lineno)                       
+                            os.exit(1)
                         end
                     end       
+                    
                     return Token.new(TokVal.COMMENT)
                 end,
         
@@ -272,17 +278,23 @@ function LexicalAnalyzer.new(filename)
         return rules[char](char)
     end
     
-    
+   
     --[[
         Returns the next token generated from the character strea starting at the 
         character the scanner is currently pointing to.
         @return -the next token.
     --]]
-    function self:getNextToken()
+    function self:getNextToken()      
         local token    
         local c = scan:nextChar()
        -- print("char= " .. c)
-        token = self:applyRules(c)
+        token = self:applyRules(c)       
+        while token:getType() == TokVal.COMMENT do
+            c = scan:nextChar()       
+            token = self:applyRules(c)
+            
+        end
+        --print(token:getType())
         return token
     end
           
@@ -324,7 +336,7 @@ function LexicalAnalyzer.new(filename)
     
     return self
 end
-
+--[[
 -- Testing --
 local t = -1
 local lexer = LexicalAnalyzer.new(arg[1])
@@ -338,3 +350,4 @@ while t ~= TokVal.EOFTOK do
     
 end
 
+--]]
