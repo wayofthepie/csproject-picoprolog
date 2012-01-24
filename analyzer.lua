@@ -294,7 +294,7 @@ function LexicalAnalyzer.new(filename)
             token = self:applyRules(c)
             
         end
-        --print(token:getType())
+        
         return token
     end
           
@@ -331,8 +331,6 @@ function LexicalAnalyzer.new(filename)
         index tries to be accessed.
     --]]
     _tlib.setDefault(rules, ruleMatcher) 
-    
-  
     
     return self
 end

@@ -48,11 +48,11 @@ TokVal = constant.protect({
     EOFTOK = "EOFTOK"    
 })
 
-Term = {
+Term = constant.protect({
     FUNC = 1,
     INT = 2,
     CHRCTR = 3,
     CELL = 4,
     REF = 5,
     UNDO = 6
-}
+})

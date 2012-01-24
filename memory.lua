@@ -6,8 +6,8 @@ require("symbol-table")
 --[[
     
 --]]
-Memory = {}
-function Memory.new() 
+OldMemory = {}
+function OldMemory.new() 
     local self = {}
     
     --[[
@@ -94,18 +94,32 @@ function Memory.new()
         return memory
     end
     
+    --[[
+        Sets the heapmark variable to pointer.
+        @param pointer -the value to point heapmark at
+    --]]
     function self:setHeapMark(pointer)
         heapmark = pointer
     end
     
+    --[[
+        @return -the value of heapmark.
+    --]]
     function self:getHeapMark()
         return heapmark
     end
     
+    --[[
+        Sets the heapp variable to pointer.
+        @param pointer -the value to set heapp to
+    --]]
     function self:setHeapPointer(pointer)
         heapp = pointer
     end
     
+    --[[
+        @return -the current value of the heap pointer
+    --]]
     function self:getHeapPointer()
         return heapp
     end
@@ -130,8 +144,8 @@ Build = {}
 function Build.new(symTab,mem)
     
     local self = {}
-    
-    
+       
+    local refnode = {} -- references to variables
     
     local TERM_SIZE     = 3
     
@@ -139,20 +153,49 @@ function Build.new(symTab,mem)
     
     ---------- Helper Functions for Terms ----------
     --[[
-        @param termpointer -pointer to mem
-        @param offset - 
-        @param tType - type of term
+        @param termpointer  -pointer to mem
+        @param offset       - 
+        @param tType        -type of term
     --]]
     local function makeTag(termpointer, offset, tType)
-        mem:get()[termpointer] = 256 * (offset + tType)
+        mem:get()[termpointer] = tType
     end
     
+    --[[
+        Helper function for building terms on the heap
+        @param termpointer  -location on the heap to build the term
+        @param term         -the term
+    --]]
     local function build(termpointer, term) mem:get()[termpointer + 2] = term end
     
+    --[[
+        Builds a func term on the heap
+        @param termpointer  -location on the heap to build the term
+        @param func         -the term
+    --]]
     local function buildFunc(termpointer, func) build(termpointer,func) end
     
+    --[[
+        Builds the arguments of func on the heap
+        @param termpointer  -location on the heap to build the term
+        @param num          -the argument number
+    --]]
+    local function buildFuncArgs(termpointer,num, arg) 
+        mem:get()[termpointer + num + 2] = arg
+    end
+    
+    --[[
+        Builds an integer on the heap
+        @param termpointer  -location on the heap to build the integer
+        @param num          -the integer
+    --]]
     local function buildInt(termpointer,num) build(termpointer,num) end
     
+    --[[
+        Builds a character term on the heap
+        @param termpointer  -location on the heap to build the term
+        @param func         -the term 
+    --]]
     local function buildChar(termpointer,char) build(termpointer,char) end
         
     ------------------------------------------------ 
@@ -167,15 +210,15 @@ function Build.new(symTab,mem)
         local termpointer
         local arity, index = 0       
         local termAndArity = 0
-        local refnode = {}
+        
         
         arity = func:get(SymbolFields.ARITY)        
         termAndArity = TERM_SIZE + arity
         termpointer = mem:heapAlloc(termAndArity)
-    
+        
         makeTag(termpointer, termAndArity, Term.FUNC)
         buildFunc(termpointer,func)
-        print("tab= " .. mem:get()[termpointer])
+        print("tab= " .. termpointer)
         return termpointer
     end
     
@@ -184,7 +227,7 @@ function Build.new(symTab,mem)
         @param func
         @param arg1
         @param arg2
-        @return
+        @return -pointer to the compound on the heap
     --]]
     function self:makeNode(func, arg1, arg2)
         args = { arg1, arg2 }
@@ -192,8 +235,9 @@ function Build.new(symTab,mem)
     end
     
     --[[
-        Construct a reference cell prepared earlier.0
-        
+        Construct a reference cell prepared earlier.
+        @param offset   -the position in refnode to create the reference
+        @return         -the valuse of refnode at offset
     --]]
     function self:makeRef(offset)
         return refnode[offset]
@@ -201,6 +245,8 @@ function Build.new(symTab,mem)
     
     --[[
         Construct an integer node on the heap.
+        @param integer -the value of the integer
+        @return -a pointer to the position on the heap
     --]]
     function self:makeInt(integer)
         local termpointer 
@@ -214,6 +260,8 @@ function Build.new(symTab,mem)
     
     --[[
         Constructs a character node on the heap.
+        @param char -the value of the character
+        @return -a pointer to the position on the heap
     --]]
     function self:makeChar(char)
         local termpointer
@@ -226,6 +274,8 @@ function Build.new(symTab,mem)
     
     --[[
         Constructs a string as a Prolog list of chars.
+        @param string -the value of the string
+        @return -a pointer to the position on the heap
     --]]
     function self:makeString(string)
         local termpointer
@@ -238,36 +288,61 @@ function Build.new(symTab,mem)
     end
     
     ---------- Helper Functions for Clauses ----------
+    
+    --[[
+        @param pointer -pointer to the clause on the heap
+    --]]
     local function setNumVars(pointer,nvars)
-        mem[pointer] = nvars
+        mem:get()[pointer] = nvars
     end
     
     --[[
         Unification key.
+        @param pointer -pointer to the clause on the heap
     --]]
     local function setClauseKey(pointer,val)
-        mem[pointer + 1] = val
+        mem:get()[pointer + 1] = val
     end
     
+    --[[
+        @param pointer -pointer to the clause on the heap
+    --]]
     local function setNextClause(pointer,nextClause)
-        mem[pointer + 2] = nextClause
+        mem:get()[pointer + 2] = nextClause
     end
     
+    --[[
+        @param pointer -pointer to the clause on the heap
+    --]]
     local function setClauseHead(pointer,head)
-        mem[pointer + 3] = head
+        mem:get()[pointer + 3] = head
     end
     
+    --[[
+        Returns a pointer to the start of a clause body.
+        @param pointer -pointer to the clause on the heap
+    --]]
     local function startOfClauseBody(pointer)
         return pointer + 4
     end
     
+    --[[
+        Sets the value of the arguments in the clause body.
+        @param pointer  -pointer to the clause on the heap
+        @param num      -the argument number n the body of the clause
+        @param arg      -the value of argument number 'num'
+    --]]
     local function clauseBody(pointer,num,arg)
-        mem[startOfClauseBody(pointer) + num - 1] = arg
+        mem:get()[startOfClauseBody(pointer) + num - 1] = arg
     end        
     --------------------------------------------------
     
     --[[
         Constructs a clause on the heap
+        @param nvars    -number of variables in the clause
+        @param head
+        @param body
+        @param nbody
     --]]
     function self:makeClause(nvars,head,body,nbody)
         local num = 1
@@ -291,17 +366,43 @@ function Build.new(symTab,mem)
             
     end
     
-    function self:getKind(pointer)
-        print(mem:get(pointer))
-        return mem:get(pointer)
+    --[[
+        Returns the type of term at pointer.
+        @param pointer -location of the term
+        @return -the type of term at pointer in memory
+    --]]
+    function self:getKind(pointer)       
+        return mem:get()[pointer] 
     end
     
+    --[[
+        Prints memory.
+    --]]
     function self:printMem()
         mem:printMemory()
     end
     
+    --[[
+        Initializes the refnode array
+    --]]
+    local function initRefnode()
+        for i = 1, TunableParameters.MAXARITY do 
+            p = mem:heapAlloc(TERM_SIZE)
+            makeTag(p,Term.REF)
+            refnode[i] = p
+        end
+    end
+    
+    initRefnode()
+    
     return self
 end
+
+Memory = {}
+function Memory.new()
+    
+end
+
 --[[
 local mem = Memory.new()
     

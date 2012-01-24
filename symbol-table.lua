@@ -3,7 +3,9 @@ require("constant")
 require("built-in-relations")
 require("symbol")
 
-
+--[[
+    Table mapping built in relations to integer codes.
+--]]
 local BuiltIn = {
     CUT     = 1,         -- !/0
     CALL    = 2,
@@ -16,8 +18,6 @@ local BuiltIn = {
     FAIL    = 9
 }
 
-
-
 SymbolTable = {}
 
 --[[
@@ -26,16 +26,37 @@ SymbolTable = {}
     TODO Use hash function to compute index.
 --]]
 function SymbolTable.new()
+    
     local self = {}
     
+    --[[
+        Number of symbols.
+    --]]
     local symcount = 0
     
+    --[[
+        Stores the symbols.
+    --]]
     local symbolsTable = {}
     
+    
+    --[[
+        Variables for storing builtin symbols
+    --]]
+    
+    -- cons symbol (":", list concatenation)
     local cons
+    
+    -- cut symbol ("!")
     local cutsym
+    
+    -- equality symbol ("=")
     local eqsym
+    
+    -- nil symbol ("nil")
     local nilsym
+    
+    -- not symbol ("not")
     local notsym    
     
         
@@ -61,11 +82,11 @@ function SymbolTable.new()
         end
         return exists,sym
     end
-     
-    
-    
+       
     --[[
-        @param symbolName - string representing the name of this symbol.
+        @param symbolName   -string representing the name of this symbol.
+        @return             -exists: true if the symbol exists
+                            -symbol: the symbol if it exists
     --]]
     function self:symbolNameExists(symbolName)
         local symbol
@@ -82,7 +103,8 @@ function SymbolTable.new()
     
     --[[
         Adds a Symbol to the table symbols, if that Symbol does not already exist. 
-        @param symbol - the Symbol you want to define
+        @param symbol   -the Symbol you want to define
+        @return         -the Symbol
     --]]
     function self:defineSymbol(symbol)
         if not self:symbolExists(symbol) then
@@ -97,8 +119,19 @@ function SymbolTable.new()
         return symbol
     end    
     
+    --[[
+        @return  -the nil symbol
+    --]]
     function self:getNilSym()   return nilsym end
+    
+    --[[
+        @return  -the cons symbol
+    --]]
     function self:getConsSym()  return cons end
+    
+    --[[
+        @return  -the equality symbol
+    --]]    
     function self:getEqSym()    return eqsym end
     
     
@@ -114,9 +147,6 @@ function SymbolTable.new()
     
     --[[
         Initializes the bult-in symbols (relations).
-        
-        TODO these symbols must be created so they can be accessed
-        from anywhere.
     --]]
     local function initBuiltInSymbols()
         cons = self:defineSymbol(Symbol.new(":", 2, 0, nil))
@@ -136,10 +166,7 @@ function SymbolTable.new()
         Initializes the bult-in symbols (relations) on creation of
         this object.
     --]]
-    initBuiltInSymbols()
-    
-    
-    
+    initBuiltInSymbols()   
     
     return self
 end
