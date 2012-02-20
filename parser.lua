@@ -389,7 +389,7 @@ function Parser.new(symTab,mem)
             while token:getType() == TokVal.COMMA do
                 eat(TokVal.COMMA)
                 arity = arity + 1
-                args[arity] = self:parseTerm()
+                args[arity] = parseTerm()
             end            
             eat(TokVal.RPAR)            
         end
@@ -412,7 +412,7 @@ function Parser.new(symTab,mem)
         Rules:  primary ::= compound | variable | number | string | char | ‘(’ term ‘)’
         @return -pointer to the term on the heap
     --]]
-    function self:parsePrimary()
+    local function parsePrimary()
         
         local term
         
@@ -494,26 +494,60 @@ function Parser.new(symTab,mem)
         if token:getType() == TokVal.COLON then
             eat(TokVal.COLON)
             term = memoryBuilder:makeNode(symTab:getConsSym(),
-                                          term,self:parseFactor())
+                                          term,parseFactor())
         end  
         
         return term
     end
     
     local function parseTerm() 
-        local term = self:parseFactor()
+        local term = parseFactor()
               
         if token:getType() == TokVal.EQUAL then
             eat(TokVal.EQUAL)
             term = memoryBuilder:makeNode(symtab:getEqSym(),
-                                          term,self:parseFactor())
+                                          term,parseFactor())
         end    
         
         return term
     end
     
-    local function parseClause() 
-    
+    local function parseClause(isgoal)      
+        local head,term
+        local minus = false
+        local body  = {}
+        local num   = 0
+              
+        if isgoal then
+            head = nil
+        else 
+            head = self:parseTerm()            
+            --checkAtom(head)
+            eat(TokVal.ARROW)
+        end
+        
+        if token:getType() ~= TokVal.DOT then            
+            while token:getType() ~= TokVal.COMMA do
+                num = num + 1
+                minus = false
+                if token:getType() == TokVal.NEGATE then
+                    eat(TokVal.NEGATE)
+                    minus = true                    
+                end
+                term = self:parseTerm()                
+                --checkAtom(term)
+                if minus then
+                    body[num] = 
+                        memoryBuilder:makeNode(symTab:getNilSym(),term,nil)
+                else                   
+                    body[num] = term
+                end
+                if token:getType() ~= TokVal.COMMA then 
+                    break 
+                end
+                eat(TokVal.COMMA)
+            end
+        
     end
     
     --[[--Public functions--]]--

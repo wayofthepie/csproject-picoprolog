@@ -400,7 +400,41 @@ end
 
 Memory = {}
 function Memory.new()
+    local self = {}
     
+    --[[
+        Storage for heap, local stack (grows up) and global stack (grows down).
+        The total size of this table is TunableParameters.MEMSIZE.
+    --]]
+    local memory = {}                                                  --
+    
+    --[[
+        Pointer to the local stack pointer, Grows upwards in memory,
+        stored above the heap.
+    --]]
+    local localsp= 0
+    
+    --[[
+        Pointer to global stack. Grows downwards in memory, size can 
+        be set in prelude.lua.
+    --]]
+    local globalsp = TunableParameters.MEMSIZE
+    
+    --[[
+        Pointer to the heap. Starts at 0 location in memory, and grows to 
+    --]]
+    local heapp = 0
+    
+    --[[
+        Indicates the beginning of a clause. This is needed as program
+        clauses become a permanent part of the heap, but goal clauses 
+        can be discarded
+     --]]        
+    local heapmark = 0
+    
+    
+    
+    return self  
 end
 
 --[[

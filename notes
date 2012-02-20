@@ -1,0 +1,59 @@
+Term:
+Compound:           
+    - kind = FUNC  
+    - function symbol 'func' 
+    - number of arguments, each a term itself
+
+Integers/Characters etc..:
+    - kind = INT/CHRCTR etc..
+    - field that contains the value
+    
+Variables:
+    - represented by two kinds of records
+    
+    - kind = REF
+        -variables that appear in program clauses
+    
+    - kind = CELL
+        - variables introduced during the execution of a goal
+    
+Grammar:
+program     ::= { clause }
+clause      ::= [ atom | ‘#’ ] ‘:-’ [ literal { ‘,’ literal } ‘.’
+literal     ::= [ ‘not’ ] atom
+atom        ::= compound | term ‘=’ term
+term        ::= primary [ ‘:’ term ]
+primary     ::= compound | variable | number | string | char | ‘(’ term ‘)’
+compound    ::= ident [ ‘(’ term { ‘,’ term } ‘)’ ]
+
+
+Symbol table:
+Names of functions, relations, constantsand variables are held in a hash table
+
+    - name      = name of symbol
+    - arity     = number of arguments, or -1
+    - action    = code if built-in 0 otherwise
+    - proc      = clause - clause chain
+    
+variables:
+    symCount - number of symbols
+    symTable - table used to store symbols
+    
+    built-in symbols:
+        cons, cutsym, eqsym, nilsym, notsym
+        
+functions
+    
+    symbolExists - checks if a symbol exists 
+        arguments   - symbol = the symbol being looked for
+        return      - 1. whether the symbol exists
+                      2. the symbol if it exists
+    
+    symbolNameExists - checks if a symbol exists 
+        arguments   - symbol = the symbol name being looked for
+        return      - 1. whether the symbol exists
+                      2. the symbol if it exists
+    
+    defineSymbol - adds a symbol to the symbol table
+        arguments   - the symbol you want to define
+        return      - the symbol

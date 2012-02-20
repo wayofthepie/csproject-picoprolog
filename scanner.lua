@@ -18,7 +18,7 @@ function Scanner.new(filename)
     local pushedChar = nil
     
     --[[        
-        @var File to read from.
+        File to read from.
     --]]
     local file = io.open(filename)
       
