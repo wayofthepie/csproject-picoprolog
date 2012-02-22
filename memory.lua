@@ -2,7 +2,8 @@ require("constant")
 require("prelude")
 require("symbol")
 require("symbol-table")
-
+require("stringbuilder")
+require("clause")
 --[[
     
 --]]
@@ -140,8 +141,8 @@ end
 
 
 
-Build = {}
-function Build.new(symTab,mem)
+OldBuild = {}
+function OldBuild.new(symTab,mem)
     
     local self = {}
        
@@ -410,7 +411,8 @@ function Memory.new()
     
     --[[
         Pointer to the local stack pointer, Grows upwards in memory,
-        stored above the heap.
+        stored above the heap. This wil begin a the vaue of the heap 
+        pointer heapp.
     --]]
     local localsp= 0
     
@@ -432,9 +434,160 @@ function Memory.new()
      --]]        
     local heapmark = 0
     
+    --Public Functions
+    --[[
+        Stores bject "obj" in the local stack.
+        @param obj -the object to store
+        @return -index of the object on the stack
+    --]]
+    function self:locAlloc(obj)
+        local temp
+        
+        if localsp + 1 >= globalsp then 
+            -- TODO This should also kill interpreter.
+            error("Out of Stack space!!") 
+        else 
+            memory[localsp] = obj
+            localsp = localsp + 1
+        end
+        return localsp       
+    end
     
+     --[[
+        Allocate space on the global stack.
+        @param obj 
+        @return -index of the object on the global stack
+    --]]
+    function self:gloAlloc(obj)
+        local pointer
+        if globalsp - 1 <= localsp then
+            -- TODO This should also kill interpreter.
+            error("Out of Stack space!!")
+        else
+            memory[globalsp] = obj
+            globalsp = globalsp + 1
+        end
+        return globalsp
+    end
+    
+    --[[
+        Allocate memory on the heap.
+        @param obj
+        @return -index of the object in the heap
+    --]]
+    function self:heapAlloc(obj)
+        if heapp + 1 > TunableParameters.MEMSIZE then
+            -- TODO should kill interpreter
+            error("Out of heap space!")
+        else
+            memory[heapp] = obj
+            heapp = heapp + 1
+        end      
+              
+        return heapp
+    end
+    
+    --[[
+        Prints all locations of memory.        
+    --]]
+    function self:printMemory()
+        for k,v in pairs(memory) do            
+            print(k,v)
+        end
+    end
     
     return self  
+end
+
+
+Build = {}
+function Build.new(symtab, memory)
+    
+    local self = {}
+       
+    local vartable = {}
+    
+    -- Stores variable REF nodes
+    local refnode = {} -- references to variables
+    
+    -- Number of nodes in refnode table
+    local numVars = 0
+    
+    --[[
+        Stores a compound on the heap
+        @param obj -the compound term to store on the heap
+        @return -the index of the term on the heap
+    --]]
+    function self:makeCompound(obj)
+        local index = memory:heapAlloc(obj)
+        return index
+    end
+    
+    --[[
+        Stores an int on the heap
+        @param num -the value to stored
+        @return -the index of the value on the heap
+    --]]
+    function self:makeInt(num)
+        local index = memory:heapAlloc(num)
+        return index
+    end
+    
+    --[[
+        Stores a character on the heap
+        @param char -the character to store on the heap
+        @return -the index of the value on the heap
+    --]]
+    function self:makeChar(char)
+        local index = memory:heapAlloc(char)
+        return index
+    end
+    
+    --[[
+        Constructs a string as a Prolog list of chars, 
+        and stores it on the heap.
+        @param string -the value of the string
+        @return -index of the value on the heap
+    --]]
+    function self:makeString(string)
+        local pstr = buildString()
+        local index = memory:heapAlloc(pstr)        
+        return index
+    end
+    
+    --[[
+        Construct a reference cell.
+        @param varName  -value of the cell
+        @return         -
+    --]]
+    function self:makeRef(varName)
+        local index = 1
+        refnode[numVars + 1] = varName
+        numVars = numVars + 1
+        return numVars
+    end
+    
+    --[[
+        Constructs a clause and stores it on the heap
+        @param nvars    -number of variables in the clause
+        @param head
+        @param body
+        @param nbody
+    --]]
+    function self:makeClause(nvars,head,body,nbody)
+        local index
+        local clause = Clause.new()
+        clause:setNumVars(nvars)
+        clause:setHead(head)
+        clause:setBody(body)
+        clause:setNumBody(nbody)
+        index = memory:heapAlloc(clause)
+        return index
+    end
+    
+    
+    
+    return self
 end
 
 --[[

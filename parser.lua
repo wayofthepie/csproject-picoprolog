@@ -1,6 +1,6 @@
 require "analyzer" require "prelude" require "memory"
 require "symbol"   require "symbol-table" 
-
+require "compound" 
 
 OldParser = {}
 function OldParser.new(symTab) 
@@ -333,6 +333,13 @@ function OldParser.new(symTab)
       
 end
 
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+
 
 Parser = {}
 function Parser.new(symTab,mem)
@@ -348,6 +355,9 @@ function Parser.new(symTab,mem)
     -- Current token
     local token = lexer:getNextToken()
     
+    local memoryBuilder = Build.new(symTab,mem)
+    
+    local _tlib = require "lib/_tlib"
     
     --[[-- Private Functions --]]--
     --[[
@@ -376,7 +386,7 @@ function Parser.new(symTab,mem)
         -- Whether the token value exists as a symbol
         local exists, symbol = symTab:symbolNameExists(tValue)
         
-        -- CUrrent value of token
+        -- Current value of token
         local symVal = token:getValue()
 
         eat(TokVal.IDENT)
@@ -403,8 +413,11 @@ function Parser.new(symTab,mem)
                 error("wrong number of arguments")
             end
         end   
-        
-        return memoryBuilder:makeCompound(symbol,args)
+        local compound = Compound.new()
+        compound:setSymbol(tValue)
+        compound:setArgs(args)
+        compound:setArity(arity)
+        return memoryBuilder:makeCompound(compound)
     end
     
     --[[
@@ -412,7 +425,7 @@ function Parser.new(symTab,mem)
         Rules:  primary ::= compound | variable | number | string | char | ‘(’ term ‘)’
         @return -pointer to the term on the heap
     --]]
-    local function parsePrimary()
+    local function self:parsePrimary()
         
         local term
         
@@ -481,26 +494,30 @@ function Parser.new(symTab,mem)
             Sets the default return value of table 'terms'
             to the function 'default'.
         --]]
-        _tlib.setDefault(terms,default) 
+        _tlib.setDefault(rules,default) 
       
         rules[token:getType()]()
         
         return term
     end
     
-    local function parseFactor() 
+    local function self:parseFactor() 
+        local args = {}
+        local compound = Compound.new()
         local term = self:parsePrimary()
        
         if token:getType() == TokVal.COLON then
             eat(TokVal.COLON)
-            term = memoryBuilder:makeNode(symTab:getConsSym(),
-                                          term,parseFactor())
+            args = { term, self:parseFactor() }
+            compound:setSymbol(symTab:getConsSym())
+            compound:setArgs(args)
+            term = memoryBuilder:makeNode(compound)
         end  
         
         return term
     end
     
-    local function parseTerm() 
+    local function self:parseTerm() 
         local term = parseFactor()
               
         if token:getType() == TokVal.EQUAL then
@@ -512,7 +529,7 @@ function Parser.new(symTab,mem)
         return term
     end
     
-    local function parseClause(isgoal)      
+    local function self:parseClause(isgoal)      
         local head,term
         local minus = false
         local body  = {}
@@ -548,14 +565,35 @@ function Parser.new(symTab,mem)
                 eat(TokVal.COMMA)
             end
         
+        end
+    end
+    
+    function self:readClause()
+        local clause       
+        
+        repeat     
+            nvars = 0            
+            token = lexer:getNextToken()            
+            -- Point heap to heapmark
+            
+                       
+            if token:getType() == TokVal.EOFTOK then
+                clause = nil
+            else 
+                -- interacting var should be passed instead 
+                clause = self:parseClause(true) 
+                
+            end
+        until token:getType() == TokVal.EOFTOK
+        return clause
     end
     
     --[[--Public functions--]]--
-    
+    return self
 end
 
 
 tab = SymbolTable.new()
-mem = OldMemory
-p = OldParser.new(tab)
+mem = Memory
+p = Parser.new(tab)
 p:readClause()

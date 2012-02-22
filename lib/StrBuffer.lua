@@ -9,7 +9,7 @@ function StrBuffer.new()
     local index = 1
     
     --[[
-        Appends the character 'char' to the end of this StrngBuffer.
+        Appends the character 'char' to the end of this StringBuffer.
     --]]
     function self:append(char)
         string[index] = char
