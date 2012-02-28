@@ -1,4 +1,4 @@
-/** Factorial **/
+/* Factorial */
 factorial(0,1).
 
 factorial(N,F) :-

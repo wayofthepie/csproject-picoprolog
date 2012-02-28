@@ -1,7 +1,11 @@
+require "prelude"
+
 Compound = {}
 function Compound.new()
     
     local self = {}
+    
+    local termKind = Term.FUNC
     
     local symbol 
     
@@ -16,6 +20,15 @@ function Compound.new()
     function self:getSymbol()   return symbol end
     function self:getArgs()     return args end
     function self:getArity()    return arity end
+    function self:getTermKind() return termKind end
+    
+    function self:toString()
+        print("Compound:")
+        print(self:getSymbol())
+        print(self:getArgs())
+        print(self:getArity())
+        print("------------")
+    end
     
     return self    
 end

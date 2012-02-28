@@ -26,5 +26,14 @@ function Clause.new()
     function self:getBody()     return body end
     function self:getNumBody()  return nbody end
     
+    function self:toString()
+        print("Clause:")
+        print(self:getNumVars())
+        print(self:getHead())
+        print(self:getBody())
+        print(self:getNumBody())
+        print("------------")
+    end
+    
     return self
 end
