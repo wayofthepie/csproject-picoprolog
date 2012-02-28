@@ -1,6 +1,4 @@
-require "analyzer" require "prelude" require "memory"
-require "symbol"   require "symbol-table" 
-require "compound" 
+
 
 OldParser = {}
 function OldParser.new(symTab) 
@@ -85,7 +83,7 @@ function OldParser.new(symTab)
         
         -- The number of arguments
         local arity   = 0
-               
+                       
         -- Whether the token value exists as a symbol
         local exists, symbol = symTab:symbolNameExists(tValue)
         
@@ -139,7 +137,8 @@ function OldParser.new(symTab)
             
             [TokVal.VARIABLE]       =   function() 
                                             varLookup(token:getValue())
-                                            eat(TokVal.VARIABLE) 
+                                            eat(TokVal.VARIABLE)                                            
+                                            nvars = nvars + 1
                                         end,
                                         
             [TokVal.NUMBER]         =   function() 
@@ -340,6 +339,7 @@ end
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
 
+-- TODO varLookup()
 
 Parser = {}
 function Parser.new(symTab,mem)
@@ -348,6 +348,9 @@ function Parser.new(symTab,mem)
     
     -- Stores the variables seen so far
     local variables = {}
+    
+    -- Number of variables of a clause
+    local nvars = 0
     
     -- Lexical Analyzer object
     local lexer = LexicalAnalyzer.new(arg[1])
@@ -375,7 +378,7 @@ function Parser.new(symTab,mem)
     
     --[[
     --]]
-    local function parseCompound() 
+    function self:parseCompound() 
      
         -- The arguments of the term
         local args  = {}
@@ -389,17 +392,20 @@ function Parser.new(symTab,mem)
         -- Current value of token
         local symVal = token:getValue()
 
+        -- Compound to create
+        local compound = Compound.new()
+        
         eat(TokVal.IDENT)
         
         -- Get the arity
         if token:getType() == TokVal.LPAR then
             eat(TokVal.LPAR)
             arity = 1
-            args[1] = self:parseTerm()            
+            args[1] = self:parseTerm()  -- add the terms          
             while token:getType() == TokVal.COMMA do
                 eat(TokVal.COMMA)
                 arity = arity + 1
-                args[arity] = parseTerm()
+                args[arity] = self:parseTerm()
             end            
             eat(TokVal.RPAR)            
         end
@@ -413,10 +419,11 @@ function Parser.new(symTab,mem)
                 error("wrong number of arguments")
             end
         end   
-        local compound = Compound.new()
+        
         compound:setSymbol(tValue)
         compound:setArgs(args)
         compound:setArity(arity)
+        
         return memoryBuilder:makeCompound(compound)
     end
     
@@ -425,7 +432,7 @@ function Parser.new(symTab,mem)
         Rules:  primary ::= compound | variable | number | string | char | ‘(’ term ‘)’
         @return -pointer to the term on the heap
     --]]
-    local function self:parsePrimary()
+    function self:parsePrimary()
         
         local term
         
@@ -443,7 +450,7 @@ function Parser.new(symTab,mem)
                 Variable:
             --]]
             [TokVal.VARIABLE]       =   function() 
-                                            varLookup(token:getValue())
+                                            --varLookup(token:getValue())
                                             eat(TokVal.VARIABLE) 
                                         end,
             
@@ -478,7 +485,8 @@ function Parser.new(symTab,mem)
                                             eat(TokVal.LPAR)
                                             term = self:parseTerm()
                                             eat(TokVal.RPAR)
-                                        end      
+                                        end,
+            [TokVal.ARROW]           =   function() print("arrow") eat(TokVal.ARROW) end
         }
              
         --[[
@@ -501,35 +509,40 @@ function Parser.new(symTab,mem)
         return term
     end
     
-    local function self:parseFactor() 
+    function self:parseFactor() 
         local args = {}
-        local compound = Compound.new()
+        local compound
         local term = self:parsePrimary()
        
         if token:getType() == TokVal.COLON then
+            compound = Compound.new()
             eat(TokVal.COLON)
             args = { term, self:parseFactor() }
             compound:setSymbol(symTab:getConsSym())
             compound:setArgs(args)
-            term = memoryBuilder:makeNode(compound)
+            term = memoryBuilder:makeCompound(compound)
         end  
         
         return term
     end
     
-    local function self:parseTerm() 
-        local term = parseFactor()
+    function self:parseTerm() 
+        local compound 
+        local term = self:parseFactor()
               
         if token:getType() == TokVal.EQUAL then
+            compound = Compound.new()
             eat(TokVal.EQUAL)
-            term = memoryBuilder:makeNode(symtab:getEqSym(),
-                                          term,parseFactor())
+            args = { term, self:parseFactor() }
+            compound:setSymbol(symTab:getEqSym())
+            compound:setArgs(args)
+            term = memoryBuilder:makeCompound(compound)
         end    
         
         return term
     end
     
-    local function self:parseClause(isgoal)      
+    function self:parseClause(isgoal)      
         local head,term
         local minus = false
         local body  = {}
@@ -566,6 +579,7 @@ function Parser.new(symTab,mem)
             end
         
         end
+        return memoryBuilder:makeClause(nvars,head,body,num)
     end
     
     function self:readClause()
@@ -580,6 +594,8 @@ function Parser.new(symTab,mem)
             if token:getType() == TokVal.EOFTOK then
                 clause = nil
             else 
+                -- reset nvars to zero
+                nvars = 0
                 -- interacting var should be passed instead 
                 clause = self:parseClause(true) 
                 
@@ -593,7 +609,3 @@ function Parser.new(symTab,mem)
 end
 
 
-tab = SymbolTable.new()
-mem = Memory
-p = Parser.new(tab)
-p:readClause()

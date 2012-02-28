@@ -1,4 +1,3 @@
-
 --[[
     Constructs a string as a polog list.
     @param string -string to build
@@ -17,6 +16,3 @@ function buildString(string)
     return str
 end
 
-t = buildString("test")
-
-for k,v in pairs(t) do print(k .. v) end

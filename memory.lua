@@ -487,12 +487,16 @@ function Memory.new()
         return heapp
     end
     
-    --[[
+
+      --[[
         Prints all locations of memory.        
     --]]
     function self:printMemory()
-        for k,v in pairs(memory) do            
-            print(k,v)
+        for k,v in pairs(memory) do                        
+            for x,y in pairs(v) do
+                print(x,y)
+                
+            end
         end
     end
     
@@ -584,7 +588,6 @@ function Build.new(symtab, memory)
         index = memory:heapAlloc(clause)
         return index
     end
-    
     
     
     return self

@@ -291,10 +291,9 @@ function LexicalAnalyzer.new(filename)
         token = self:applyRules(c)       
         while token:getType() == TokVal.COMMENT do
             c = scan:nextChar()       
-            token = self:applyRules(c)
-            
+            token = self:applyRules(c)            
         end
-        
+        print(token:getType())        
         return token
     end
           
