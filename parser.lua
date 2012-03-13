@@ -46,12 +46,12 @@ function Parser.new(symTab,mem)
         end
     end
     
-    local function varLookup(variable)
-        if variables[variable] == nil
+   --[[ local function varLookup(variable)
+        if variables[variable] == nil then
             variables[variable] = variable
         else
         end
-    end
+    end--]]
     
     --[[
         Parse a compound term.

@@ -1,5 +1,5 @@
 tab = {}
-tab[1] = 2
-tab[2] = 2
+tab["t"] = 2
+tab["y"] = 2
 
 print(#tab)

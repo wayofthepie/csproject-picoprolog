@@ -177,6 +177,69 @@ function Clause.new()
     return self
 end
 
+
+-------------------------------------------------------------------------------
+
+--[[
+    As a clause is read, this object will hold the variable names contained
+    in the clause and their location on the heap.
+--]]
+VarTable = {}
+function VarTable.new(memory)
+    
+    local self = {}
+    
+    --[[
+        Table containing the variable names.
+    --]]
+    local variables = {}
+    
+    --[[
+        Number of variables in table.
+    --]]
+    local nvars = 0
+    
+    --[[
+        TODO finish this
+    --]]
+    function self:insert(var)
+        if nvars = TunableParameters.MAXARITY then
+            error("too many variables!")
+            os.exit(1)
+        end
+        
+        --[[
+            Allocate space on the heap for this variable,
+            let its value be its name for now.
+        --]]
+        if self:exists(var)then 
+            variables[var] = memory:heapAlloc(var)
+            nvars = nvars + 1
+        end
+        return variables[var]
+    end
+    
+    --[[
+        @param var -the variable name we are looking for.
+        @return - true if the variable exists
+    --]]
+    function self:exists(var)        
+        local exists = false
+        
+        if variables[var] ~=nil then
+            exists = true
+        end
+        
+        return exists
+    end
+    
+    --[[
+        @return -the number of variables
+    --]]
+    function self:getNumVars()
+        return nvars
+    end
+end
 -------------------------------------------------------------------------------
 
 --[[
@@ -220,6 +283,7 @@ function Node.new(t,v)
     function self:getValue()    return nodeValue end
     
     --[[
+        TODO add print info for REF, CELL and UNDO.
         Prints information about this node, and the value it contains.
     --]]
     function self:printNode()
@@ -242,6 +306,7 @@ function Node.new(t,v)
                                 print(self:getValue())
                             end
         }
+        
         types[self:getType()]()
     end
     
@@ -440,12 +505,12 @@ function Build.new(symtab, memory)
     --[[
         TODO fix this...
         Construct a reference cell.
-        @param varName  -value of the cell
+        @param ref  -pointer to variable
         @return         -
     --]]
-    function self:makeRef(varName)
+    function self:makeRef(ref)
         local index = 1
-        refnode[numVars + 1] = varName
+        refnode[numVars + 1] = ref
         numVars = numVars + 1
         return numVars
     end
