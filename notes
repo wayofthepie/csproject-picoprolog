@@ -57,3 +57,6 @@ functions
     defineSymbol - adds a symbol to the symbol table
         arguments   - the symbol you want to define
         return      - the symbol
+        
+Ground terms
+Terms that contain no variables.

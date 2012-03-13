@@ -26,26 +26,35 @@ function Parser.new(symTab,mem)
         Checks for an expected token and ignores it
         @param tokenType -the type of the expected token
     --]]
-    local function eat(tokenType)
+    local function eat(tokenType)        
         local expected = token:getType()
         if expected == tokenType then
             if tokenType ~= TokVal.DOT then
-                token = lexer:getNextToken()                           
+                print("eating = " .. tokenType)
+                token = lexer:getNextToken()                
             end
         end
     end
     
+    --[[
+        Checks that a literal is a compound term.
+    --]]
     local function checkAtom(atom)
-        
-        local compound = memoryBuilder:getType(atom)
-        if  compound:getTermKind() ~= Term.FUNC then
-            error("literal must be compound term")
-            
+        if  memoryBuilder:getType(atom) ~= Term.FUNC then
+            error("literal must be compound term")            
             os.exit(1)
         end
     end
     
+    local function varLookup(variable)
+        if variables[variable] == nil
+            variables[variable] = variable
+        else
+        end
+    end
+    
     --[[
+        Parse a compound term.
     --]]
     function self:parseCompound() 
      
@@ -67,7 +76,6 @@ function Parser.new(symTab,mem)
         compound:setSymbol(token:getValue())
         
         eat(TokVal.IDENT)
-        
         -- Get the arity
         if token:getType() == TokVal.LPAR then
             eat(TokVal.LPAR)
@@ -77,7 +85,11 @@ function Parser.new(symTab,mem)
                 eat(TokVal.COMMA)
                 arity = arity + 1
                 args[arity] = self:parseTerm()
+                print("tttttt")
+                print(args[arity])
             end            
+            compound:setArgs(args)
+            compound:setArity(arity)
             eat(TokVal.RPAR)            
         end
         
@@ -91,8 +103,7 @@ function Parser.new(symTab,mem)
             end
         end   
                 
-        compound:setArgs(args)
-        compound:setArity(arity)
+        
         
         return memoryBuilder:makeCompound(compound)
     end
@@ -120,8 +131,8 @@ function Parser.new(symTab,mem)
                 Variable:
             --]]
             [TokVal.VARIABLE]       =   function() 
-                                            --varLookup(token:getValue())
-                                            print("t val= " .. token:getValue())
+                                            varLookup(token:getValue())
+                                            --print("t val= " .. token:getValue())
                                             eat(TokVal.VARIABLE) 
                                         end,
             
@@ -157,7 +168,11 @@ function Parser.new(symTab,mem)
                                             term = self:parseTerm()
                                             eat(TokVal.RPAR)
                                         end,
-            [TokVal.ARROW]           =   function() print("arrow") eat(TokVal.ARROW) end
+            
+            [TokVal.ARROW]           =  function() 
+                                            print("arrow") 
+                                            eat(TokVal.ARROW) 
+                                        end
         }
              
         --[[
@@ -220,6 +235,7 @@ function Parser.new(symTab,mem)
     
     --[[
         TODO This must be fixed...
+        @return index of the clause on the heap
     --]]
     function self:parseClause(isgoal)      
         local head,term
@@ -229,19 +245,18 @@ function Parser.new(symTab,mem)
               
         if isgoal then
             head = nil
-        else 
-            
-            head = self:parseTerm()            
-            
-            checkAtom(head)
-            
+        else             
+            head = self:parseTerm()                  
+            checkAtom(head)            
             eat(TokVal.ARROW)
         end
         
         if token:getType() ~= TokVal.DOT then            
             while token:getType() ~= TokVal.COMMA do
+                
                 num = num + 1
                 minus = false
+                
                 if token:getType() == TokVal.NEGATE then
                     eat(TokVal.NEGATE)
                     minus = true                    
@@ -251,7 +266,7 @@ function Parser.new(symTab,mem)
                 
                 if token:getType() == TokVal.DOT then
                     break
-                else
+                else                    
                     checkAtom(term)
                 end
                 
@@ -261,9 +276,11 @@ function Parser.new(symTab,mem)
                 else                   
                     body[num] = term
                 end
+                
                 if token:getType() ~= TokVal.COMMA then 
                     break 
                 end
+                
                 eat(TokVal.COMMA)
             end
         
@@ -272,13 +289,13 @@ function Parser.new(symTab,mem)
     end
     
     function self:readClause()
-        local clause       
+        local clause = nil      
+        local index = 1
         
-        repeat     
+        if token:getType() ~= TokVal.EOFTOK then
             nvars = 0            
             token = lexer:getNextToken()            
-            -- Point heap to heapmark
-            
+            -- Point heap to heapmark            
                        
             if token:getType() == TokVal.EOFTOK then
                 clause = nil
@@ -287,12 +304,12 @@ function Parser.new(symTab,mem)
                 nvars = 0
                 -- interacting var should be passed instead 
                 clause = self:parseClause(true) 
-                
+                index = index + 1
             end
-        until token:getType() == TokVal.EOFTOK
+        end
+        
         return clause
-    end
-    
+    end    
      
     return self
 end

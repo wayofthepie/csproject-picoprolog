@@ -3,9 +3,262 @@ require("prelude")
 require("symbol")
 require("symbol-table")
 require("stringbuilder")
-require("clause")
 
+--[[
+    Object used to represent a compound term in memory,
+--]]
+Compound = {}
+function Compound.new()
+    
+    local self = {}
+    
+    --[[
+        The symbol used to represent this compound term.
+    --]]
+    local symbol = ""
+    
+    --[[
+        Arguments of this compound term.
+    --]]
+    local arguments = {}
+    
+    --[[
+        Arity of this compound term.
+    --]]
+    local arity = 0
+    
+    --[[
+        @param sym -symbol for this compound.
+    --]]
+    function self:setSymbol(sym)    symbol = sym end
+    
+    --[[
+        @param args -arguments of this compound.
+    --]]
+    function self:setArgs(args)     arguments = args end
+    
+    --[[
+        @param arity -arity of this compound.
+    --]]
+    function self:setArity(num)     arity = num end
+    
+    --[[
+        @return -the symbol for this compound
+    --]]
+    function self:getSymbol()   return symbol end
+    
+    --[[
+        @return -the arguments of this compound.
+    --]]
+    function self:getArgs()     return arguments end
+    
+    --[[
+        @return -the arity of this compound.
+    --]]
+    function self:getArity()    return arity end
+    
+    function self:toString()
+        print("------------")
+        print("Compound:")
+        print("Symbol= ")
+        print(self:getSymbol())
+        print("Arguments= ")
+        if self:getArgs() ~= nil then
+            for k,v in pairs(self:getArgs()) do
+                print(v)
+            end        
+        else
+            print("arguments are nil!")
+        end
+        print("Arity= ")
+        print(self:getArity())
+        print("------------")
+    end
+    
+    return self    
+end
+
+-------------------------------------------------------------------------------
+
+--[[
+    Object used to represent a clause in memory.
+--]]
+Clause = {}
+function Clause.new()
+    
+    local self = {}
+    
+    -- Number of variables
+    local nvars = 0
+    
+    -- Term
+    local head
+    
+    -- Arguments
+    local body
+    
+    -- Number of arguments
+    local nbody = 0
+    
+    -- Clause key
+    local key
+    
+    --[[
+        Sets the number of variables in this clause.
+        @param num -the number of variables
+    --]]
+    function self:setNumVars(num)   nvars = num end
+    
+    --[[
+        Sets the head of this clause.
+        @param term -the head of this clause
+    --]]
+    function self:setHead(term)     head = term end
+    
+    --[[
+        Sets the body of this clause.
+        @param args -the body of this clause
+    --]]
+    function self:setBody(args)     body = args end
+    
+    --[[
+        TODO can get this dynamically using #body....
+        Sets the number of arguments in the body of 
+        this clause.
+        @param num -the number of arguments in the 
+                    body of this clause.
+    --]]
+    function self:setNumBody(num)   nbody = num end
+    
+    --[[
+        @param ckey -the clause unification key
+    --]]
+    function self:setKey(ckey)  key = ckey end
+    
+    --[[
+        @return the number of variables in this clause
+    --]]
+    function self:getNumVars()  return nvars end
+    
+    --[[
+        @return the head of this clause
+    --]]
+    function self:getHead()     return head end
+    
+    --[[
+        @return the body of this clause
+    --]]
+    function self:getBody()     return body end
+    
+    --[[
+        @return the number of arguments in the body 
+                of this clause
+    --]]
+    function self:getNumBody()  return nbody end
+    
+    --[[
+        TODO remove
+    --]]
+    function self:getType() return "clause" end
+    
+    --[[
+        String representation of this clause.
+    --]]
+    function self:toString()
+        print("------------")
+        print("Clause:")
+        print(self:getNumVars())
+        print(self:getHead())
+        print(self:getBody())
+        print(self:getNumBody())
+        print("------------")
+    end
+    
+    return self
+end
+
+-------------------------------------------------------------------------------
+
+--[[
+    Nodes are used to populate the memory table.
+    Every entry in the table is a node that stores the
+    type of the entry and its value.
+--]]
+Node= {}
+
+--[[
+    Constructs a new node of type t and value v.
+--]]
+function Node.new(t,v)
+    
+    local self = {}
+    
+    -- Type of the node.
+    local nodeType = t
+    
+    -- Value of the node
+    local nodeValue = v
+    
+    --[[
+        Sets the type of the node.
+    --]]
+    function self:setType(t)    nodeType = t end
+    
+    --[[
+        Sets the value of the node.
+    --]]
+    function self:setValue(v)   nodeValue = v end
+    
+    --[[ 
+        Returns the type of the node.
+    --]]
+    function self:getType()     return nodeType  end
+    
+    --[[
+        Returns the value of the node.
+    --]]
+    function self:getValue()    return nodeValue end
+    
+    --[[
+        Prints information about this node, and the value it contains.
+    --]]
+    function self:printNode()
+        local types = {
+            [Term.FUNC] =   function()
+                                local val = self:getValue()
+                                print(Term.FUNC)
+                                print(val:toString())
+                            end,
+            [Term.INT]  =   function()
+                                print(Term.INT)
+                                print(self:getValue())
+                            end,
+            [Term.CHRCTR]=  function()
+                                print(Term.CHRCTR)
+                                print(self:getValue())
+                            end,
+            [Term.STRING]=  function()
+                                print(Term.STRING)
+                                print(self:getValue())
+                            end
+        }
+        types[self:getType()]()
+    end
+    
+    return self
+end
+
+-------------------------------------------------------------------------------
+
+--[[
+    Used for organising memory. Stores the heap, 
+    local and global stack in a table.
+--]]
 Memory = {}
+
+--[[
+    Constructs a memory object.
+--]]
 function Memory.new()
     local self = {}
     
@@ -38,7 +291,7 @@ function Memory.new()
         clauses become a permanent part of the heap, but goal clauses 
         can be discarded
      --]]        
-    local heapmark = 0
+    local heapmark = 1
     
     --Public Functions
     --[[
@@ -83,6 +336,7 @@ function Memory.new()
     --]]
     function self:heapAlloc(obj)
         print("loc= " .. heapp)
+        
         if heapp + 1 > TunableParameters.MEMSIZE then
             -- TODO should kill interpreter
             error("Out of heap space!")
@@ -107,8 +361,7 @@ function Memory.new()
     function self:printMemory()
         for k,v in pairs(memory) do                        
             for x,y in pairs(v) do
-                print(x,y)
-                
+                print(x,y)                
             end
         end
     end
@@ -117,6 +370,12 @@ function Memory.new()
 end
 
 
+-------------------------------------------------------------------------------
+
+--[[
+    Class used for building the programs representation
+    in memory.
+--]]
 Build = {}
 function Build.new(symtab, memory)
     
@@ -136,7 +395,9 @@ function Build.new(symtab, memory)
         @return -the index of the term on the heap
     --]]
     function self:makeCompound(obj)
-        local index = memory:heapAlloc(obj)
+        local node = Node.new(Term.FUNC,obj)
+        local index = memory:heapAlloc(node)
+        node:printNode()
         return index
     end
     
@@ -145,8 +406,9 @@ function Build.new(symtab, memory)
         @param num -the value to stored
         @return -the index of the value on the heap
     --]]
-    function self:makeInt(num)
-        local index = memory:heapAlloc(num)
+    function self:makeInt(num)    
+        local node = Node.new(Term.INT,num)
+        local index = memory:heapAlloc(node)
         return index
     end
     
@@ -156,19 +418,22 @@ function Build.new(symtab, memory)
         @return -the index of the value on the heap
     --]]
     function self:makeChar(char)
-        local index = memory:heapAlloc(char)
+        local node = Node.new(Term.CHRCTR,char)
+        local index = memory:heapAlloc(node)
         return index
     end
     
     --[[
+        TODO fix this...
         Constructs a string as a Prolog list of chars, 
         and stores it on the heap.
         @param string -the value of the string
         @return -index of the value on the heap
     --]]
     function self:makeString(string)
-        local pstr = buildString()
-        local index = memory:heapAlloc(pstr)        
+        local pstr = buildString(string)
+        local node = Node.new(Term.STRING,pstr)
+        local index = memory:heapAlloc(node)        
         return index
     end
     
@@ -193,6 +458,7 @@ function Build.new(symtab, memory)
         @param nbody
     --]]
     function self:makeClause(nvars,head,body,nbody)
+        print("creating clause")
         local index
         local clause = Clause.new()
         clause:setNumVars(nvars)
@@ -207,8 +473,10 @@ function Build.new(symtab, memory)
         Returns the type of the literal at the location
         loc.
     --]]
-    function self:getType(loc)        
-        return memory:get(loc)
+    function self:getType(loc)    
+        print(loc)
+        local node = memory:get(loc)         
+        return node:getType()
     end
     
     return self
