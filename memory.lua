@@ -3,6 +3,7 @@ require("prelude")
 require("symbol")
 require("symbol-table")
 require("stringbuilder")
+require("lib/StrBuffer")
 
 --[[
     Object used to represent a compound term in memory,
@@ -57,22 +58,28 @@ function Compound.new()
     --]]
     function self:getArity()    return arity end
     
+    
     function self:toString()
-        print("------------")
-        print("Compound:")
-        print("Symbol= ")
-        print(self:getSymbol())
-        print("Arguments= ")
+        local strBuff = StrBuffer.new()
+        strBuff:append("------------")
+        
+        strBuff:append("Compound:")
+        strBuff:append("Symbol= ")
+        strBuff:append(self:getSymbol())        
+        strBuff:append("Arguments= ")
         if self:getArgs() ~= nil then
             for k,v in pairs(self:getArgs()) do
-                print(v)
+                strBuff:append(v)
+                strBuff:append("\n")
             end        
         else
+            -- TODO Test, remove this!!
             print("arguments are nil!")
         end
-        print("Arity= ")
-        print(self:getArity())
-        print("------------")
+        strBuff:append("Arity= ")
+        strBuff:append(self:getArity())
+        strBuff:append("------------")
+        return strBuff:toPrintString()
     end
     
     return self    
@@ -157,21 +164,17 @@ function Clause.new()
     function self:getNumBody()  return nbody end
     
     --[[
-        TODO remove
-    --]]
-    function self:getType() return "clause" end
-    
-    --[[
         String representation of this clause.
     --]]
     function self:toString()
-        print("------------")
-        print("Clause:")
-        print(self:getNumVars())
-        print(self:getHead())
-        print(self:getBody())
-        print(self:getNumBody())
-        print("------------")
+        local strBuff = StrBuffer.new()
+        strBuff:append("Clause: ")
+        strBuff:append(self:getNumVars())
+        strBuff:append(self:getHead())
+        strBuff:append(self:getBody())
+        strBuff:append(self:getNumBody())
+        strBuff:append("------------")
+        return strBuff:toPrintString()
     end
     
     return self
@@ -185,7 +188,7 @@ end
     in the clause and their location on the heap.
 --]]
 VarTable = {}
-function VarTable.new(memory)
+function VarTable.new(memoryBuilder)
     
     local self = {}
     
@@ -201,9 +204,11 @@ function VarTable.new(memory)
     
     --[[
         TODO finish this
+        @param var -the variable to insert into the table
+        @return -pointer to the variable on the heap
     --]]
     function self:insert(var)
-        if nvars = TunableParameters.MAXARITY then
+        if nvars == TunableParameters.MAXARITY then
             error("too many variables!")
             os.exit(1)
         end
@@ -212,10 +217,11 @@ function VarTable.new(memory)
             Allocate space on the heap for this variable,
             let its value be its name for now.
         --]]
-        if self:exists(var)then 
-            variables[var] = memory:heapAlloc(var)
+        if not self:exists(var) then 
+            variables[var] = memoryBuilder:makeVar(var)
             nvars = nvars + 1
         end
+
         return variables[var]
     end
     
@@ -239,6 +245,17 @@ function VarTable.new(memory)
     function self:getNumVars()
         return nvars
     end
+    
+    --[[
+        Prints all variables.
+    --]]
+    function self:printVars()
+        for k,v in pairs(variables) do
+            print("Key " .. k .. "; val ".. v)
+        end
+    end
+    
+    return self
 end
 -------------------------------------------------------------------------------
 
@@ -251,6 +268,8 @@ Node= {}
 
 --[[
     Constructs a new node of type t and value v.
+    @param t -node type
+    @param v -node value
 --]]
 function Node.new(t,v)
     
@@ -291,7 +310,7 @@ function Node.new(t,v)
             [Term.FUNC] =   function()
                                 local val = self:getValue()
                                 print(Term.FUNC)
-                                print(val:toString())
+                                --print(val:toString())
                             end,
             [Term.INT]  =   function()
                                 print(Term.INT)
@@ -400,8 +419,6 @@ function Memory.new()
         @return -index of the object in the heap
     --]]
     function self:heapAlloc(obj)
-        print("loc= " .. heapp)
-        
         if heapp + 1 > TunableParameters.MEMSIZE then
             -- TODO should kill interpreter
             error("Out of heap space!")
@@ -462,7 +479,7 @@ function Build.new(symtab, memory)
     function self:makeCompound(obj)
         local node = Node.new(Term.FUNC,obj)
         local index = memory:heapAlloc(node)
-        node:printNode()
+        --node:printNode()
         return index
     end
     
@@ -503,16 +520,14 @@ function Build.new(symtab, memory)
     end
     
     --[[
-        TODO fix this...
-        Construct a reference cell.
-        @param ref  -pointer to variable
-        @return         -
+        Constructs a variable on the heap.
+        @param var -variable name
     --]]
-    function self:makeRef(ref)
-        local index = 1
-        refnode[numVars + 1] = ref
-        numVars = numVars + 1
-        return numVars
+    function self:makeVar(var)
+        local node = Node.new(var, var)
+        local index = memory:heapAlloc(node)
+        --print("var=" .. index)
+        return index
     end
     
     --[[
@@ -524,7 +539,7 @@ function Build.new(symtab, memory)
     --]]
     function self:makeClause(nvars,head,body,nbody)
         print("creating clause")
-        local index
+        local index 
         local clause = Clause.new()
         clause:setNumVars(nvars)
         clause:setHead(head)
@@ -539,26 +554,9 @@ function Build.new(symtab, memory)
         loc.
     --]]
     function self:getType(loc)    
-        print(loc)
         local node = memory:get(loc)         
         return node:getType()
     end
     
     return self
 end
-
---[[
-local mem = Memory.new()
-    
-local symTab = SymbolTable.new()
-
-f = Symbol.new("FUNC", 5, 0, nil)
-
-b = Build.new(symTab,mem)
-local i     = b:makeCompound(f,5)
-local test  = b:makeString("test")
-b:makeClause(2,"e2",{t,t},0)
-b:makeClause(5,"e22",{t,t},4)
-b:makeClause(2,"e2",{t,t},0)
-b:makeClause(5,"e22",{t,t},4)
-mem:printMemory() --]]

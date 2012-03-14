@@ -25,24 +25,50 @@ function Token.new(tokenType, value)
         return v
     end
     
+    function self:toString()
+        local strBuff = StrBuffer.new()
+        strBuff:append("-----Token-----")
+        strBuff:append("Type: " .. self:getType())
+        strBuff:append("Value: " .. self:getValue())
+        strBuff:append("----------")
+        return strBuff:toPrintString()
+    end
+    
     return self
 end
 
 --[[
     Represents rules for characters being scanned.
 --]]
-
 LexicalAnalyzer = {}
+
+--[[
+    @param filename -file to analyze
+--]]
 function LexicalAnalyzer.new(filename) 
+    
     local self = {}
     
+    --[[
+        Scanner to push characters into the analyzer.
+    --]]
     local scan = Scanner.new(filename)
-    local _tlib = require "lib/_tlib"       
-    local sbuff = StrBuffer.new()
-    local futureToken = nil
-    local lineno = 1
     
+    --[[
+        Library for useful table functions
+    --]]
+    local _tlib = require "lib/_tlib"       
+    
+    --[[
+        Used for building large strings.
+    --]]
+    local sbuff = StrBuffer.new()
+        
+    --[[
+        Rules for building tokens.
+    --]]
     local rules = {
+        
         --[[
             Whitespace rules: 
             Ignore, scan the next character and return a Token of type and value 0.
@@ -55,18 +81,10 @@ function LexicalAnalyzer.new(filename)
         --[[
             End of file rules: 
         --]]
-        [SpecVals.ENDFILE]  =   function()
-                                    return Token.new(TokVal.EOFTOK)
+        [SpecVals.ENDFILE]  =   function()                                    
+                                    return Token.new(TokVal.EOFTOK, "END OF FILE")
                                 end,
-        
-        --[[
-            End of line rules:
-            TODO fix line number counting.
-        --]]
-        [SpecVals.ENDLINE]  =   function()                                                                                                                                                         
-                                    return Token.new(TokVal.EOLTOK, scan:getLineNum()) 
-                                end,
-        
+               
         --[[
             Rules for identifiers:
         --]]
@@ -80,7 +98,7 @@ function LexicalAnalyzer.new(filename)
                                         
                                         if tokenlen > TunableParameters.MAXSTRING then
                                             error("Syntax Error: identifier too long! line: " 
-                                                  .. lineno)
+                                                  .. scan:getLineNum())
                                            
                                         end             
                                         
@@ -104,7 +122,7 @@ function LexicalAnalyzer.new(filename)
                                         
                                         if tokenlen > TunableParameters.MAXSTRING then
                                             error("Syntax Error: identifier too long! line: " 
-                                                  .. lineno)
+                                                  .. scan:getLineNum())
                                         end             
                                         
                                         sbuff:append(char)
@@ -185,7 +203,6 @@ function LexicalAnalyzer.new(filename)
         
         --[[
             Forward slash:
-                                    lineno = 
             If we see this character, check the next. If that is not a "*", then 
             throw an error for the "/" character. Else loop until we find either then
             closing symbol of a comment (*/) or the end of the character stream, throw
@@ -203,7 +220,8 @@ function LexicalAnalyzer.new(filename)
                             chartwo = char; char = scan:nextChar() 
                         end
                         if char == nil then
-                            error("Syntax Error: end of file in comment! line: " .. lineno)                       
+                            error("Syntax Error: end of file in comment! line: " .. 
+                                   scan:getLineNum())                       
                             os.exit(1)
                         end
                     end       
@@ -237,7 +255,7 @@ function LexicalAnalyzer.new(filename)
                             -- throw syntax error
                             error("Syntax Error: missing quote, possibly an"
                                    .. " incomplete character constant line: " 
-                                   .. lineno)
+                                   .. scan:getLineNum())
                         end
                         
                         
@@ -265,7 +283,8 @@ function LexicalAnalyzer.new(filename)
         --]]
         ['ILLEGAL'] =   function(char) 
                             -- TODO kill interpreter
-                            error("SYNTAX ERROR: illegal character " .. char .." on line ".. lineno )                             
+                            error("SYNTAX ERROR: illegal character " .. char ..
+                            " on line ".. scan:getLineNum() )                             
                         end
                 
     }
@@ -291,9 +310,11 @@ function LexicalAnalyzer.new(filename)
         token = self:applyRules(c)       
         while token:getType() == TokVal.COMMENT do
             c = scan:nextChar()       
-            token = self:applyRules(c)            
+            token = self:applyRules(c)             
         end
-        print(token:getType())        
+        
+        print(token:toString())        
+        
         return token
     end
           

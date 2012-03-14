@@ -1,24 +1,31 @@
 -- TODO varLookup()
 
+--[[
+    Builds the internal representation of the program.
+--]]
 Parser = {}
-function Parser.new(symTab,mem)
+
+--[[
+    @param memoryBuilder    - Build
+    @param varTab           - VarTable
+--]]
+function Parser.new(memoryBuilder, varTab)
     
-    local self = {}    
+    local self = {}  
     
-    -- Stores the variables seen so far
-    local variables = {}
-    
-    -- Number of variables of a clause
-    local nvars = 0
-    
-    -- Lexical Analyzer object
+    --[[
+        Lexical Analyzer 
+    --]]
     local lexer = LexicalAnalyzer.new(arg[1])
     
-    -- Current token
-    local token = lexer:getNextToken()
+    --[[
+        Current token
+    --]]
+    local token = nil
     
-    local memoryBuilder = Build.new(symTab,mem)
-    
+    --[[
+        Library for useful table functions
+    --]]
     local _tlib = require "lib/_tlib"
     
     --[[-- Private Functions --]]--
@@ -45,16 +52,9 @@ function Parser.new(symTab,mem)
             os.exit(1)
         end
     end
-    
-   --[[ local function varLookup(variable)
-        if variables[variable] == nil then
-            variables[variable] = variable
-        else
-        end
-    end--]]
-    
+       
     --[[
-        Parse a compound term.
+        Parse a compound term. Atoms are compound terms of 0 arity.
     --]]
     function self:parseCompound() 
      
@@ -84,9 +84,7 @@ function Parser.new(symTab,mem)
             while token:getType() == TokVal.COMMA do
                 eat(TokVal.COMMA)
                 arity = arity + 1
-                args[arity] = self:parseTerm()
-                print("tttttt")
-                print(args[arity])
+                args[arity] = self:parseTerm()                
             end            
             compound:setArgs(args)
             compound:setArity(arity)
@@ -102,8 +100,6 @@ function Parser.new(symTab,mem)
                 error("wrong number of arguments")
             end
         end   
-                
-        
         
         return memoryBuilder:makeCompound(compound)
     end
@@ -131,7 +127,8 @@ function Parser.new(symTab,mem)
                 Variable:
             --]]
             [TokVal.VARIABLE]       =   function() 
-                                            varLookup(token:getValue())
+                                            term = varTab:insert(token:getValue())
+                                            
                                             --print("t val= " .. token:getValue())
                                             eat(TokVal.VARIABLE) 
                                         end,
@@ -140,7 +137,7 @@ function Parser.new(symTab,mem)
                 Number:
             --]]
             [TokVal.NUMBER]         =   function() 
-                                            term = memoryBuilder:makeInt(tValue) 
+                                            term = memoryBuilder:makeInt(token:getValue()) 
                                             eat(TokVal.NUMBER)                                            
                                         end,
             
@@ -148,7 +145,7 @@ function Parser.new(symTab,mem)
                 Character:
             --]]
             [TokVal.CHCON]          =   function() 
-                                            term = memoryBuilder:makeChar(tValue)
+                                            term = memoryBuilder:makeChar(token:getValue())
                                             eat(TokVal.CHCON)
                                         end,
             
@@ -156,7 +153,7 @@ function Parser.new(symTab,mem)
                 String:
             --]]
             [TokVal.STRCON]         =   function() 
-                                            term = memoryBuilder:makeString(tValue)
+                                            term = memoryBuilder:makeString(token:getValue())
                                             eat(TokVal.STRCON)
                                         end,
             
@@ -168,7 +165,7 @@ function Parser.new(symTab,mem)
                                             term = self:parseTerm()
                                             eat(TokVal.RPAR)
                                         end,
-            
+                                                  
             [TokVal.ARROW]           =  function() 
                                             print("arrow") 
                                             eat(TokVal.ARROW) 
@@ -189,7 +186,7 @@ function Parser.new(symTab,mem)
             to the function 'default'.
         --]]
         _tlib.setDefault(rules,default) 
-      
+        
         rules[token:getType()]()
         
         return term
@@ -218,7 +215,7 @@ function Parser.new(symTab,mem)
         @return -pointer to the term on the heap
     --]]
     function self:parseTerm() 
-        local compound 
+        local compound
         local term = self:parseFactor()
               
         if token:getType() == TokVal.EQUAL then
@@ -285,29 +282,42 @@ function Parser.new(symTab,mem)
             end
         
         end
-        return memoryBuilder:makeClause(nvars,head,body,num)
+        return memoryBuilder:makeClause(varTable:getNumVars(),head,body,num)
     end
     
+    --[[
+        Entry point for parser. Reads a clause and builds its internal 
+        representation in memory. Returns a pointer to the clause on the heap.
+        @return -pointer to the clause on the heap.
+    --]]    
     function self:readClause()
+       
         local clause = nil      
-        local index = 1
+       
+        --[[
+            Generate a new variable table for the new clause.
+        --]]
+        varTable = VarTable.new() 
+        
+        token = lexer:getNextToken() 
         
         if token:getType() ~= TokVal.EOFTOK then
-            nvars = 0            
-            token = lexer:getNextToken()            
-            -- Point heap to heapmark            
-                       
+                   
+            --[[
+                If its the end of the file, set clause to be nil.
+            --]]
             if token:getType() == TokVal.EOFTOK then
                 clause = nil
-            else 
-                -- reset nvars to zero
-                nvars = 0
+            else              
+                
                 -- interacting var should be passed instead 
-                clause = self:parseClause(true) 
-                index = index + 1
+                clause = self:parseClause(true)                                 
+                
+                -- print variables in this clause
+                --varTab:printVars()                
             end
         end
-        
+       
         return clause
     end    
      

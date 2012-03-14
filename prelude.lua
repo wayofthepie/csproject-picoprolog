@@ -55,5 +55,6 @@ Term = constant.protect({
     STRING = "string",
     CELL = "cell",
     REF = "ref",
+    VAR = "var",
     UNDO = "undo"
 })

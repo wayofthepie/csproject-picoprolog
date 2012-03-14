@@ -10,7 +10,7 @@ function Scanner.new(filename)
     --[[
         Keeps track of the line number.
     --]]
-    local lineno = 1
+    local lineno = 0
     
     --[[
         Character pushed back on the scanner.
@@ -33,20 +33,20 @@ function Scanner.new(filename)
             char = file:read(1)
             if char ~= nil then
                 
-                while char:match"%s" do                     
+                while char:match"%s" do    
+                    -- keeps track of line number
+                    if char == '\n' then
+                        lineno = lineno + 1
+                        print("line " .. lineno)                                      
+                    end
+                    
                     char = file:read(1) 
                     if char == nil then
                         break
                     end
-                end
-                
-                if char == '\n' then
-                    char = SpecVals.ENDLINE
-                    lineno = lineno + 1
-                    print(lineno)
-                end
-                
+                end         
             end
+            
             if char == nil then
                 char = SpecVals.ENDFILE
                 lineno = lineno + 1

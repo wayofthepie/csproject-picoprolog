@@ -9,17 +9,27 @@ function StrBuffer.new()
     local index = 1
     
     --[[
-        Appends the character 'char' to the end of this StringBuffer.
+        Appends the string 's' to the end of this StringBuffer.
     --]]
-    function self:append(char)
-        string[index] = char
+    function self:append(s)
+        string[index] = s
         index = index + 1
     end
     
     --[[
+        Returns each string in this table concatenated into
+        a single string.
     --]]
     function self:toString()
         return table.concat(string, "")
+    end
+    
+    --[[
+        Returns each string in the table seperated by a return 
+        character, used if printing the string.
+    --]]
+    function self:toPrintString()
+        return table.concat(string, "\n")
     end
     
     return self
