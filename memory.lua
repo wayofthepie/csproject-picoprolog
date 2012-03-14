@@ -4,6 +4,7 @@ require("symbol")
 require("symbol-table")
 require("stringbuilder")
 require("lib/StrBuffer")
+require("lib/_tlib")
 
 --[[
     Object used to represent a compound term in memory,
@@ -96,7 +97,7 @@ function Clause.new()
     local self = {}
     
     -- Number of variables
-    local nvars = 0
+    local numvars = 0
     
     -- Term
     local head
@@ -114,7 +115,7 @@ function Clause.new()
         Sets the number of variables in this clause.
         @param num -the number of variables
     --]]
-    function self:setNumVars(num)   nvars = num end
+    function self:setNumVars(num)   numvars = num end
     
     --[[
         Sets the head of this clause.
@@ -145,7 +146,7 @@ function Clause.new()
     --[[
         @return the number of variables in this clause
     --]]
-    function self:getNumVars()  return nvars end
+    function self:getNumVars()  return numvars end
     
     --[[
         @return the head of this clause
@@ -208,6 +209,7 @@ function VarTable.new(memoryBuilder)
         @return -pointer to the variable on the heap
     --]]
     function self:insert(var)
+        
         if nvars == TunableParameters.MAXARITY then
             error("too many variables!")
             os.exit(1)
@@ -218,10 +220,11 @@ function VarTable.new(memoryBuilder)
             let its value be its name for now.
         --]]
         if not self:exists(var) then 
+            print("inserting " .. var)            
             variables[var] = memoryBuilder:makeVar(var)
             nvars = nvars + 1
         end
-
+        print("number of variables " .. nvars)
         return variables[var]
     end
     
@@ -232,7 +235,7 @@ function VarTable.new(memoryBuilder)
     function self:exists(var)        
         local exists = false
         
-        if variables[var] ~=nil then
+        if variables[var] ~= nil then
             exists = true
         end
         
@@ -347,6 +350,11 @@ function Memory.new()
     local self = {}
     
     --[[
+        REF nodes - references to variables
+    --]]
+    local refnodes = {} 
+    
+    --[[
         Storage for heap, local stack (grows up) and global stack (grows down).
         The total size of this table is TunableParameters.MEMSIZE.
     --]]
@@ -376,6 +384,9 @@ function Memory.new()
         can be discarded
      --]]        
     local heapmark = 1
+    
+    
+    local _tlib = require "lib/_tlib"
     
     --Public Functions
     --[[
@@ -431,7 +442,39 @@ function Memory.new()
     end
     
     --[[
-        Returns the value of memory at index.
+        Checks if a pointer is on the global stack.
+    --]]
+    function self:isGlobal(pointer)
+        local isGlobal = false
+        
+        -- TODO Second test is for testing only, remove.
+        if pointer >= globalsp and pointer <= TunableParameters.MEMSIZE then
+            isGlobal = true        
+        end    
+        
+        return isGlobal
+    end
+    
+    --[[
+        Checks if a pointer is on the heap
+    --]]
+    function self:isHeap(pointer)
+        return pointer <= heapp
+    end
+    
+    --[[
+        Sets the local stack to the location above the heap.        
+    --]]
+    function self:setLocalStack()
+        localsp = heapp
+        return localsp
+    end
+    
+    --[[
+        Returns the value of memory at index. If it is a clause,
+        it will return the clause, otherwise it will return a Node
+        object.
+        @param index
     --]]
     function self:get(index)
         return memory[index]
@@ -448,6 +491,33 @@ function Memory.new()
         end
     end
     
+    --[[
+        Returns the refnodes table
+        @return - refnodes table
+    --]]
+    function getRefNodes()
+        return refnodes
+    end
+    
+    --[[
+        Initialize refnodes
+    --]]
+    
+    -- Location in refnodes
+    local index
+    
+    -- Node to store on heap
+    local node
+    
+    -- Pointer to Node containing REF on heap
+    local pointer
+    
+    for index = 1, TunableParameters.MAXARITY do         
+        node = Node.new(Term.REF,0)
+        pointer = self:heapAlloc(node)
+        refnodes[index] = pointer
+    end
+    
     return self  
 end
 
@@ -462,15 +532,7 @@ Build = {}
 function Build.new(symtab, memory)
     
     local self = {}
-       
-    local vartable = {}
-    
-    -- Stores variable REF nodes
-    local refnode = {} -- references to variables
-    
-    -- Number of nodes in refnode table
-    local numVars = 0
-    
+  
     --[[
         Stores a compound on the heap
         @param obj -the compound term to store on the heap
@@ -540,12 +602,14 @@ function Build.new(symtab, memory)
     function self:makeClause(nvars,head,body,nbody)
         print("creating clause")
         local index 
+        local node
         local clause = Clause.new()
         clause:setNumVars(nvars)
         clause:setHead(head)
         clause:setBody(body)
         clause:setNumBody(nbody)
-        index = memory:heapAlloc(clause)
+        node = Node.new(Term.CLAUSE,clause)
+        index = memory:heapAlloc(node)
         return index
     end
     

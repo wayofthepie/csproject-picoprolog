@@ -86,9 +86,3 @@ function Scanner.new(filename)
        
     return self
 end
-
---[[
-s = Scanner.new()
-s:loadFile("../../lua-prolog-code/prolog/factorial.pl")
-s:printAll()
---]]

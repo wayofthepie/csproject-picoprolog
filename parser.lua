@@ -38,8 +38,11 @@ function Parser.new(memoryBuilder, varTab)
         if expected == tokenType then
             if tokenType ~= TokVal.DOT then
                 print("eating = " .. tokenType)
-                token = lexer:getNextToken()                
+                token = lexer:getNextToken()  
+                print("next = " .. token:getType())
             end
+        else
+            print("expected " .. expected .. " got " .. tokenType )
         end
     end
     
@@ -231,7 +234,6 @@ function Parser.new(memoryBuilder, varTab)
     end
     
     --[[
-        TODO This must be fixed...
         @return index of the clause on the heap
     --]]
     function self:parseClause(isgoal)      
@@ -261,12 +263,9 @@ function Parser.new(memoryBuilder, varTab)
                 
                 term = self:parseTerm()
                 
-                if token:getType() == TokVal.DOT then
-                    break
-                else                    
-                    checkAtom(term)
-                end
-                
+                                    
+                checkAtom(term)
+                                
                 if minus then
                     body[num] = 
                         memoryBuilder:makeNode(symTab:getNilSym(),term,nil)
@@ -275,31 +274,34 @@ function Parser.new(memoryBuilder, varTab)
                 end
                 
                 if token:getType() ~= TokVal.COMMA then 
+                    eat(TokVal.DOT)
                     break 
                 end
                 
                 eat(TokVal.COMMA)
             end
-        
         end
-        return memoryBuilder:makeClause(varTable:getNumVars(),head,body,num)
+        
+        return memoryBuilder:makeClause(varTab:getNumVars(),head,body,num)
     end
     
     --[[
         Entry point for parser. Reads a clause and builds its internal 
         representation in memory. Returns a pointer to the clause on the heap.
-        @return -pointer to the clause on the heap.
+        @param interacting
+        @return -pointer to the node containing the clause on the heap.
     --]]    
-    function self:readClause()
+    function self:readClause(interacting)
        
         local clause = nil      
        
         --[[
             Generate a new variable table for the new clause.
         --]]
-        varTable = VarTable.new() 
+        varTab = VarTable.new(memoryBuilder) 
         
         token = lexer:getNextToken() 
+        print(token:getType())
         
         if token:getType() ~= TokVal.EOFTOK then
                    
@@ -311,10 +313,11 @@ function Parser.new(memoryBuilder, varTab)
             else              
                 
                 -- interacting var should be passed instead 
-                clause = self:parseClause(true)                                 
+                clause = self:parseClause(interacting)                                 
                 
                 -- print variables in this clause
-                --varTab:printVars()                
+                varTab:printVars()                
+                print("num vars " ..varTab:getNumVars())
             end
         end
        

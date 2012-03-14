@@ -21,7 +21,7 @@ TunableParameters = constant.protect({
 
 
 --[[
-    Values used throughout.
+    Special values.
 --]]
 SpecVals = constant.protect({
     SPACE = "SPACE",
@@ -29,6 +29,9 @@ SpecVals = constant.protect({
     ENDFILE = "ENDFILE"    
 })
 
+--[[
+    Possible values for tokens.
+--]]
 TokVal = constant.protect({
     IDENT = "IDENTIFIER",
     VARIABLE = "VARIABLE",
@@ -48,12 +51,16 @@ TokVal = constant.protect({
     EOFTOK = "EOFTOK"    
 })
 
+--[[
+    These constants are now used mainly to identify Nodes in memory.
+--]]
 Term = constant.protect({
-    FUNC = "func",
-    INT = "int",
-    CHRCTR = "character",
-    STRING = "string",
-    CELL = "cell",
+    CLAUSE = "clause",      -- clause
+    FUNC = "func",          -- compound term
+    INT = "int",            -- integer
+    CHRCTR = "character",   -- character
+    STRING = "string",      -- string
+    CELL = "cell",          
     REF = "ref",
     VAR = "var",
     UNDO = "undo"
